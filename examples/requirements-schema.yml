@@ -1,0 +1,111 @@
+# AI-friendly requirements.md schema
+# Ensures requirements documents follow a consistent, machine-readable structure
+# that makes it easy for AI systems to parse and understand requirements
+
+structure:
+  - heading: "# .*Requirements.*" # Project requirements title
+    children:
+      - heading: "## Overview"
+        required_text:
+          - "purpose"
+          - "scope"
+
+      - heading: "## Functional Requirements"
+        children:
+          - heading: "### FR001: .*"
+            required_text:
+              - "shall"
+              - "must"
+          - heading: "### FR[0-9]+: .*"
+            optional: true
+            required_text:
+              - "shall"
+              - "must"
+
+      - heading: "## Non-Functional Requirements"
+        children:
+          - heading: "### Performance"
+            required_text:
+              - "response time"
+              - "throughput"
+          - heading: "### Security"
+            required_text:
+              - "authentication"
+              - "authorization"
+          - heading: "### Scalability"
+            optional: true
+          - heading: "### Reliability"
+            optional: true
+          - heading: "### Usability"
+            optional: true
+          - heading: "### Maintainability"
+            optional: true
+
+      - heading: "## Technical Requirements"
+        optional: true
+        children:
+          - heading: "### Architecture"
+            optional: true
+          - heading: "### Technology Stack"
+            optional: true
+            code_blocks:
+              - { min: 1 } # Technology examples
+          - heading: "### Infrastructure"
+            optional: true
+          - heading: "### Data Requirements"
+            optional: true
+
+      - heading: "## User Stories"
+        optional: true
+        required_text:
+          - "As a"
+          - "I want"
+          - "So that"
+
+      - heading: "## Acceptance Criteria"
+        required_text:
+          - "Given"
+          - "When"
+          - "Then"
+
+      - heading: "## Constraints"
+        optional: true
+        children:
+          - heading: "### Business Constraints"
+            optional: true
+          - heading: "### Technical Constraints"
+            optional: true
+          - heading: "### Time Constraints"
+            optional: true
+          - heading: "### Budget Constraints"
+            optional: true
+
+      - heading: "## Dependencies"
+        optional: true
+        required_text:
+          - "depends on"
+
+      - heading: "## Assumptions"
+        optional: true
+
+      - heading: "## Risks"
+        optional: true
+        children:
+          - heading: "### Technical Risks"
+            optional: true
+          - heading: "### Business Risks"
+            optional: true
+          - heading: "### Mitigation Strategies"
+            optional: true
+
+      - heading: "## Success Metrics"
+        optional: true
+        required_text:
+          - "metric"
+          - "measure"
+
+      - heading: "## Glossary"
+        optional: true
+
+      - heading: "## Appendix"
+        optional: true

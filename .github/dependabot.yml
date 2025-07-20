@@ -1,0 +1,40 @@
+# Dependabot configuration file
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Go modules
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    reviewers:
+      - "jackchuka"
+    labels:
+      - "dependencies"
+      - "go"
+    target-branch: "main"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    reviewers:
+      - "jackchuka"
+    assignees:
+      - "jackchuka"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    target-branch: "main"
