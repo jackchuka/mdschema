@@ -29,6 +29,7 @@ using declarative schemas to maintain consistent documentation across projects.`
 	cmd.AddCommand(NewInitCmd())
 	cmd.AddCommand(NewCheckCmd())
 	cmd.AddCommand(NewGenerateCmd())
+	cmd.AddCommand(NewDeriveCmd())
 	cmd.AddCommand(NewVersionCmd())
 
 	return cmd
