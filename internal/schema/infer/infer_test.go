@@ -91,7 +91,7 @@ author: "Doc Writer"
 
 Body
 
-## Child
+## Child (Optional)
 
 More
 `
@@ -115,7 +115,7 @@ More
 		t.Fatalf("expected first heading '# First', got %q", got.Structure[0].Heading)
 	}
 
-	if len(got.Structure[0].Children) != 1 || got.Structure[0].Children[0].Heading != "## Child" {
-		t.Fatalf("expected child heading '## Child', got %#v", got.Structure[0].Children)
+	if len(got.Structure[0].Children) != 1 || got.Structure[0].Children[0].Heading != "## Child (Optional)" {
+		t.Fatalf("expected child heading '## Child (Optional)', got %#v", got.Structure[0].Children)
 	}
 }

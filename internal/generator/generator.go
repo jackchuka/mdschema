@@ -63,16 +63,5 @@ func (g *Generator) extractHeadingText(pattern string) string {
 		text = strings.TrimSpace(text[1:])
 	}
 
-	// Handle common regex patterns
-	if strings.Contains(text, "[a-zA-Z0-9_\\- ]+") {
-		return "Your Project Title"
-	}
-
-	// If it's a literal heading, return as-is
-	if !strings.ContainsAny(text, "[](){}*+?^$|\\") {
-		return text
-	}
-
-	// For complex patterns, provide a placeholder
-	return "Section Title"
+	return text
 }
