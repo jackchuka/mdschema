@@ -4,7 +4,7 @@ go 1.24.4
 
 require (
 	github.com/spf13/cobra v1.10.2
-	github.com/yuin/goldmark v1.7.13
+	github.com/yuin/goldmark v1.7.14
 	gopkg.in/yaml.v3 v3.0.1
 )
 
