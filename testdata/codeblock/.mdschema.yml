@@ -1,0 +1,10 @@
+# Schema for codeblock rule tests
+structure:
+  - heading: "# [a-zA-Z0-9_\\- ]+"
+    children:
+      - heading: "## Installation"
+        code_blocks:
+          - { lang: bash, min: 1 }
+      - heading: "## Usage"
+        code_blocks:
+          - { lang: go, min: 2 }

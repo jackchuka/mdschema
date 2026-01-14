@@ -8,6 +8,30 @@ import (
 type Schema struct {
 	// Document structure with embedded section rules
 	Structure []StructureElement `yaml:"structure,omitempty"`
+
+	// Global link validation rules
+	Links *LinkRule `yaml:"links,omitempty"`
+}
+
+// LinkRule defines validation rules for links in the document
+type LinkRule struct {
+	// ValidateInternal validates anchor links (#section-name)
+	ValidateInternal bool `yaml:"validate_internal,omitempty"`
+
+	// ValidateFiles validates relative file links (./other.md)
+	ValidateFiles bool `yaml:"validate_files,omitempty"`
+
+	// ValidateExternal validates external URLs (http/https)
+	ValidateExternal bool `yaml:"validate_external,omitempty"`
+
+	// ExternalTimeout is the timeout in seconds for external URL checks (default: 10)
+	ExternalTimeout int `yaml:"external_timeout,omitempty"`
+
+	// AllowedDomains restricts external links to these domains only
+	AllowedDomains []string `yaml:"allowed_domains,omitempty"`
+
+	// BlockedDomains blocks external links to these domains
+	BlockedDomains []string `yaml:"blocked_domains,omitempty"`
 }
 
 // StructureElement represents an element in the document structure

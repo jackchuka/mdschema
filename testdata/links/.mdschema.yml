@@ -1,0 +1,9 @@
+# Schema for link validation tests
+structure:
+  - heading: "# [a-zA-Z0-9_\\- ]+"
+
+links:
+  validate_internal: true
+  validate_files: true
+  blocked_domains:
+    - blocked-domain.com
