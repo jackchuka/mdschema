@@ -3,8 +3,8 @@ name: Go License Check
 on:
   pull_request:
     paths:
-      - 'go.mod'
-      - 'go.sum'
+      - "go.mod"
+      - "go.sum"
   push:
     branches: [main]
 
@@ -25,4 +25,4 @@ jobs:
 
       - name: Check licenses
         run: |
-          go-licenses check ./... --ignore github.com/tailor-inc --include_tests --disallowed_types=permissive,forbidden,restricted
+          go-licenses check ./... --include_tests --disallowed_types=permissive,forbidden,restricted
