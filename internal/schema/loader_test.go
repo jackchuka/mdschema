@@ -32,8 +32,8 @@ func TestLoadValidSchema(t *testing.T) {
 		t.Errorf("expected 2 structure elements, got %d", len(schema.Structure))
 	}
 
-	if schema.Structure[0].Heading != "# Title" {
-		t.Errorf("Structure[0].Heading = %q, want %q", schema.Structure[0].Heading, "# Title")
+	if schema.Structure[0].Heading.Pattern != "# Title" {
+		t.Errorf("Structure[0].Heading.Pattern = %q, want %q", schema.Structure[0].Heading.Pattern, "# Title")
 	}
 
 	if !schema.Structure[1].Optional {
@@ -102,8 +102,8 @@ func TestLoadSchemaWithChildren(t *testing.T) {
 		t.Fatalf("expected 2 children, got %d", len(schema.Structure[0].Children))
 	}
 
-	if schema.Structure[0].Children[0].Heading != "## Child" {
-		t.Errorf("Children[0].Heading = %q, want %q", schema.Structure[0].Children[0].Heading, "## Child")
+	if schema.Structure[0].Children[0].Heading.Pattern != "## Child" {
+		t.Errorf("Children[0].Heading.Pattern = %q, want %q", schema.Structure[0].Children[0].Heading.Pattern, "## Child")
 	}
 
 	if !schema.Structure[0].Children[1].Optional {
@@ -161,12 +161,12 @@ func TestLoadMultipleSchemas(t *testing.T) {
 		t.Fatalf("expected 2 schemas, got %d", len(schemas))
 	}
 
-	if schemas[0].Structure[0].Heading != "# First" {
-		t.Errorf("schemas[0].Structure[0].Heading = %q, want %q", schemas[0].Structure[0].Heading, "# First")
+	if schemas[0].Structure[0].Heading.Pattern != "# First" {
+		t.Errorf("schemas[0].Structure[0].Heading.Pattern = %q, want %q", schemas[0].Structure[0].Heading.Pattern, "# First")
 	}
 
-	if schemas[1].Structure[0].Heading != "# Second" {
-		t.Errorf("schemas[1].Structure[0].Heading = %q, want %q", schemas[1].Structure[0].Heading, "# Second")
+	if schemas[1].Structure[0].Heading.Pattern != "# Second" {
+		t.Errorf("schemas[1].Structure[0].Heading.Pattern = %q, want %q", schemas[1].Structure[0].Heading.Pattern, "# Second")
 	}
 }
 

@@ -3,7 +3,9 @@
 # that makes it easy for AI systems to parse and understand requirements
 
 structure:
-  - heading: "# .*Requirements.*" # Project requirements title
+  - heading:
+      pattern: "# .*Requirements.*"
+      regex: true
     children:
       - heading: "## Overview"
         required_text:
@@ -12,11 +14,15 @@ structure:
 
       - heading: "## Functional Requirements"
         children:
-          - heading: "### FR001: .*"
+          - heading:
+              pattern: "### FR001: .*"
+              regex: true
             required_text:
               - "shall"
               - "must"
-          - heading: "### FR[0-9]+: .*"
+          - heading:
+              pattern: "### FR[0-9]+: .*"
+              regex: true
             optional: true
             required_text:
               - "shall"

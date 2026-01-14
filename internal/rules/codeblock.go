@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
 // CodeBlockRule validates code blocks using the hierarchical AST
@@ -24,59 +24,68 @@ func (r *CodeBlockRule) Name() string {
 	return "codeblock"
 }
 
-// validateCodeBlockRequirement validates a specific code block requirement for a section
-func (r *CodeBlockRule) validateCodeBlockRequirement(section *parser.Section, requirement schema.CodeBlockRule) []Violation {
+// validateCodeBlockRequirement validates a specific code block requirement for a node
+func (r *CodeBlockRule) validateCodeBlockRequirement(n *vast.Node, requirement schema.CodeBlockRule) []Violation {
 	violations := make([]Violation, 0)
 
-	// Count matching code blocks directly from the section
+	// Count matching code blocks directly from the node
 	count := 0
-	for _, block := range section.CodeBlocks {
+	for _, block := range n.CodeBlocks() {
 		if requirement.Lang == "" || block.Lang == requirement.Lang {
 			count++
 		}
 	}
 
+	line, col := n.Location()
+
 	// Check minimum requirement
 	if requirement.Min > 0 && count < requirement.Min {
-		message := fmt.Sprintf("Section '%s' requires at least %d code blocks", section.Heading.Text, requirement.Min)
+		message := fmt.Sprintf("Section '%s' requires at least %d code blocks", n.HeadingText(), requirement.Min)
 		if requirement.Lang != "" {
 			message = fmt.Sprintf("Section '%s' requires at least %d '%s' code blocks, found %d",
-				section.Heading.Text, requirement.Min, requirement.Lang, count)
+				n.HeadingText(), requirement.Min, requirement.Lang, count)
 		}
 
 		violations = append(violations, Violation{
 			Rule:    r.Name(),
 			Message: message,
-			Line:    section.Heading.Line,
-			Column:  section.Heading.Column,
+			Line:    line,
+			Column:  col,
 		})
 	}
 
 	// Check maximum requirement
 	if requirement.Max > 0 && count > requirement.Max {
-		message := fmt.Sprintf("Section '%s' has too many code blocks (max %d)", section.Heading.Text, requirement.Max)
+		message := fmt.Sprintf("Section '%s' has too many code blocks (max %d)", n.HeadingText(), requirement.Max)
 		if requirement.Lang != "" {
 			message = fmt.Sprintf("Section '%s' has too many '%s' code blocks (max %d, found %d)",
-				section.Heading.Text, requirement.Lang, requirement.Max, count)
+				n.HeadingText(), requirement.Lang, requirement.Max, count)
 		}
 
 		violations = append(violations, Violation{
 			Rule:    r.Name(),
 			Message: message,
-			Line:    section.Heading.Line,
-			Column:  section.Heading.Column,
+			Line:    line,
+			Column:  col,
 		})
 	}
 
 	return violations
 }
 
-// ValidateWithContext validates using pre-established section-schema mappings (no string matching)
-func (r *CodeBlockRule) ValidateWithContext(ctx *ValidationContext) []Violation {
+// ValidateWithContext validates using VAST (validation-ready AST)
+func (r *CodeBlockRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	violations := make([]Violation, 0)
 
-	// Walk through all mappings to find elements with code block rules
-	violations = append(violations, r.validateCodeBlockMappings(ctx.Mappings)...)
+	// Walk through all bound nodes to find elements with code block rules
+	ctx.Tree.WalkBound(func(n *vast.Node) bool {
+		if n.Element.SectionRules != nil && len(n.Element.CodeBlocks) > 0 {
+			for _, requirement := range n.Element.CodeBlocks {
+				violations = append(violations, r.validateCodeBlockRequirement(n, requirement)...)
+			}
+		}
+		return true
+	})
 
 	return violations
 }
@@ -125,26 +134,4 @@ func (r *CodeBlockRule) GenerateContent(builder *strings.Builder, element schema
 	}
 
 	return true
-}
-
-// validateCodeBlockMappings recursively validates code block requirements for all mappings
-func (r *CodeBlockRule) validateCodeBlockMappings(mappings []*SectionMapping) []Violation {
-	violations := make([]Violation, 0)
-
-	for _, mapping := range mappings {
-		// Check if this element has code block rules
-		if mapping.Element.SectionRules != nil && len(mapping.Element.CodeBlocks) > 0 {
-			// Validate code block requirements in all matching sections
-			for _, section := range mapping.Sections {
-				for _, requirement := range mapping.Element.CodeBlocks {
-					violations = append(violations, r.validateCodeBlockRequirement(section, requirement)...)
-				}
-			}
-		}
-
-		// Recursively validate children
-		violations = append(violations, r.validateCodeBlockMappings(mapping.Children)...)
-	}
-
-	return violations
 }

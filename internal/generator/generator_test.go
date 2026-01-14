@@ -22,7 +22,7 @@ func TestGenerateBasicStructure(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 	}
 
@@ -42,7 +42,7 @@ func TestGenerateOptionalSection(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title", Optional: true},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}, Optional: true},
 		},
 	}
 
@@ -59,10 +59,10 @@ func TestGenerateNestedChildren(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				Children: []schema.StructureElement{
-					{Heading: "## Child"},
-					{Heading: "## Another Child"},
+					{Heading: schema.HeadingPattern{Pattern: "## Child"}},
+					{Heading: schema.HeadingPattern{Pattern: "## Another Child"}},
 				},
 			},
 		},
@@ -89,7 +89,7 @@ func TestGenerateWithCodeBlocks(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Installation",
+				Heading: schema.HeadingPattern{Pattern: "# Installation"},
 				SectionRules: &schema.SectionRules{
 					CodeBlocks: []schema.CodeBlockRule{
 						{Lang: "bash", Min: 1},
@@ -112,9 +112,9 @@ func TestGenerateWithRequiredText(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Section",
+				Heading: schema.HeadingPattern{Pattern: "# Section"},
 				SectionRules: &schema.SectionRules{
-					RequiredText: []string{"important text"},
+					RequiredText: []schema.RequiredTextPattern{{Pattern: "important text"}},
 				},
 			},
 		},
@@ -155,9 +155,9 @@ func TestGenerateMultipleTopLevel(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# First"},
-			{Heading: "# Second"},
-			{Heading: "# Third"},
+			{Heading: schema.HeadingPattern{Pattern: "# First"}},
+			{Heading: schema.HeadingPattern{Pattern: "# Second"}},
+			{Heading: schema.HeadingPattern{Pattern: "# Third"}},
 		},
 	}
 
@@ -180,13 +180,13 @@ func TestGenerateDeeplyNested(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Level 1",
+				Heading: schema.HeadingPattern{Pattern: "# Level 1"},
 				Children: []schema.StructureElement{
 					{
-						Heading: "## Level 2",
+						Heading: schema.HeadingPattern{Pattern: "## Level 2"},
 						Children: []schema.StructureElement{
 							{
-								Heading: "### Level 3",
+								Heading: schema.HeadingPattern{Pattern: "### Level 3"},
 							},
 						},
 					},

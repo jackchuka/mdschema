@@ -39,6 +39,7 @@ type Section struct {
 	Tables     []*Table
 	Links      []*Link
 	Images     []*Image
+	Lists      []*List
 }
 
 // collectSections recursively collects all sections in document order
@@ -56,7 +57,6 @@ type CodeBlock struct {
 	Lang   string
 	Line   int
 	Column int
-	Parent *Heading // The heading this block appears under
 }
 
 // Link represents a link in the document
@@ -80,7 +80,6 @@ type Table struct {
 	Headers []string
 	Line    int
 	Column  int
-	Parent  *Heading
 }
 
 // Image represents an image in the document

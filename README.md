@@ -65,7 +65,9 @@ Create a `.mdschema.yml` file to define your documentation structure:
 
 ```yaml
 structure:
-  - heading: "# [a-zA-Z0-9_\\- ]+" # Regex pattern for project title
+  - heading:
+      pattern: "# [a-zA-Z0-9_\\- ]+" # Regex pattern for project title
+      regex: true
     children:
       - heading: "## Features"
         optional: true
@@ -88,11 +90,11 @@ structure:
 
 ### Schema Elements
 
-- **`heading`** - Heading pattern (supports regex)
+- **`heading`** - Heading pattern, either as a string (literal match) or object `{pattern: "...", regex: true}` for regex
 - **`optional`** - Whether the section is optional (default: false)
 - **`children`** - Nested subsections that must appear within this section
 - **`code_blocks`** - Code block requirements with language and count constraints
-- **`required_text`** - Text that must appear within the section
+- **`required_text`** - Text patterns that must appear within the section (string or `{pattern: "...", regex: true}`)
 
 ## Commands
 
@@ -137,7 +139,9 @@ mdschema derive README.md -o inferred-schema.yml
 
 ```yaml
 structure:
-  - heading: "# .*"
+  - heading:
+      pattern: "# .*"
+      regex: true
     children:
       - heading: "## Installation"
         code_blocks:
@@ -167,13 +171,19 @@ structure:
 
 ```yaml
 structure:
-  - heading: "# *"
+  - heading:
+      pattern: "# .*"
+      regex: true
     children:
       - heading: "## Prerequisites"
-      - heading: "## Step 1: *"
+      - heading:
+          pattern: "## Step 1: .*"
+          regex: true
         code_blocks:
           - { min: 1 } # Any language
-      - heading: "## Step 2: *"
+      - heading:
+          pattern: "## Step 2: .*"
+          regex: true
         code_blocks:
           - { min: 1 }
       - heading: "## Next Steps"

@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
 func TestNewCodeBlockRule(t *testing.T) {
@@ -33,7 +34,7 @@ func TestCodeBlockRuleMinimum(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					CodeBlocks: []schema.CodeBlockRule{
 						{Lang: "go", Min: 2},
@@ -43,7 +44,7 @@ func TestCodeBlockRuleMinimum(t *testing.T) {
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -75,7 +76,7 @@ func TestCodeBlockRuleMaximum(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					CodeBlocks: []schema.CodeBlockRule{
 						{Lang: "go", Max: 2},
@@ -85,7 +86,7 @@ func TestCodeBlockRuleMaximum(t *testing.T) {
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -118,7 +119,7 @@ func TestCodeBlockRuleLanguageSpecific(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					CodeBlocks: []schema.CodeBlockRule{
 						{Lang: "bash", Min: 2},
@@ -128,7 +129,7 @@ func TestCodeBlockRuleLanguageSpecific(t *testing.T) {
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -147,11 +148,11 @@ func TestCodeBlockRuleNoRequirements(t *testing.T) {
 	// No code block requirements
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -171,7 +172,7 @@ func TestCodeBlockRuleSufficient(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					CodeBlocks: []schema.CodeBlockRule{
 						{Lang: "go", Min: 2},
@@ -181,7 +182,7 @@ func TestCodeBlockRuleSufficient(t *testing.T) {
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -195,7 +196,7 @@ func TestCodeBlockRuleGenerateContent(t *testing.T) {
 	var builder strings.Builder
 
 	element := schema.StructureElement{
-		Heading: "## Code Section",
+		Heading: schema.HeadingPattern{Pattern: "## Code Section"},
 		SectionRules: &schema.SectionRules{
 			CodeBlocks: []schema.CodeBlockRule{
 				{Lang: "go", Min: 2},
@@ -220,7 +221,7 @@ func TestCodeBlockRuleGenerateContentNoRules(t *testing.T) {
 	var builder strings.Builder
 
 	element := schema.StructureElement{
-		Heading: "## Section",
+		Heading: schema.HeadingPattern{Pattern: "## Section"},
 	}
 
 	result := rule.GenerateContent(&builder, element)

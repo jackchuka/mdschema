@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
 // StructureRule validates document structure using the hierarchical AST
@@ -23,63 +24,59 @@ func (r *StructureRule) Name() string {
 	return "structure"
 }
 
-// ValidateWithContext validates using pre-established section-schema mappings (no string matching)
-func (r *StructureRule) ValidateWithContext(ctx *ValidationContext) []Violation {
+// ValidateWithContext validates using VAST (validation-ready AST)
+func (r *StructureRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	violations := make([]Violation, 0)
 
-	// Validate mappings to check for missing required elements and ordering
-	violations = append(violations, r.validateMappings(ctx.Mappings, nil)...)
-
-	return violations
-}
-
-// validateMappings validates structure and ordering for all mappings
-func (r *StructureRule) validateMappings(mappings []*SectionMapping, parent *SectionMapping) []Violation {
-	violations := make([]Violation, 0)
-
-	// Track ordering violations
-	lastFoundLine := 0
-	lastFoundElement := ""
-
-	for _, mapping := range mappings {
-		// Check if required element is missing
-		if !mapping.Element.Optional && len(mapping.Sections) == 0 {
+	// Check for missing required elements
+	ctx.Tree.Walk(func(n *vast.Node) bool {
+		if !n.IsBound && !n.Element.Optional {
+			line, col := n.Location()
 			parentName := "document root"
-			line := 1
-			col := 1
-
-			if parent != nil && len(parent.Sections) > 0 && parent.Sections[0].Heading != nil {
-				parentName = parent.Sections[0].Heading.Text
-				line = parent.Sections[0].Heading.Line
-				col = parent.Sections[0].Heading.Column
+			if n.Parent != nil {
+				parentName = n.Parent.HeadingText()
 			}
 
 			violations = append(violations, Violation{
 				Rule:    r.Name(),
-				Message: fmt.Sprintf("Required element '%s' not found within '%s'", mapping.Element.Heading, parentName),
+				Message: fmt.Sprintf("Required element '%s' not found within '%s'", n.Element.Heading.Pattern, parentName),
 				Line:    line,
 				Column:  col,
 			})
 		}
+		return true
+	})
 
-		// Check ordering for found elements
-		for _, section := range mapping.Sections {
-			if section.Heading != nil {
-				if lastFoundLine > 0 && section.StartLine < lastFoundLine {
-					violations = append(violations, Violation{
-						Rule: r.Name(),
-						Message: fmt.Sprintf("Element '%s' should appear after '%s' but appears before it",
-							section.Heading.Text, lastFoundElement),
-						Line:   section.Heading.Line,
-						Column: section.Heading.Column,
-					})
-				}
-				lastFoundLine = section.StartLine
-				lastFoundElement = section.Heading.Text
+	// Check ordering within each level
+	violations = append(violations, r.validateOrdering(ctx.Tree.Roots)...)
 
-				// Recursively validate children
-				violations = append(violations, r.validateMappings(mapping.Children, mapping)...)
+	return violations
+}
+
+// validateOrdering validates structure ordering for all nodes at a level
+func (r *StructureRule) validateOrdering(nodes []*vast.Node) []Violation {
+	violations := make([]Violation, 0)
+
+	lastLine := 0
+	lastText := ""
+
+	for _, n := range nodes {
+		if n.IsBound {
+			if lastLine > 0 && n.ActualOrder < lastLine {
+				line, col := n.Location()
+				violations = append(violations, Violation{
+					Rule: r.Name(),
+					Message: fmt.Sprintf("Element '%s' should appear after '%s' but appears before it",
+						n.HeadingText(), lastText),
+					Line:   line,
+					Column: col,
+				})
 			}
+			lastLine = n.ActualOrder
+			lastText = n.HeadingText()
+
+			// Recursively check children
+			violations = append(violations, r.validateOrdering(n.Children)...)
 		}
 	}
 
@@ -101,7 +98,7 @@ func (r *StructureRule) GenerateContent(builder *strings.Builder, element schema
 			if child.Optional {
 				status = "optional"
 			}
-			fmt.Fprintf(builder, "<!-- %d. %s (%s) -->\n", i+1, child.Heading, status)
+			fmt.Fprintf(builder, "<!-- %d. %s (%s) -->\n", i+1, child.Heading.Pattern, status)
 		}
 		builder.WriteString("\n")
 	}

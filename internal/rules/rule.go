@@ -5,15 +5,16 @@ import (
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
-// ContextualRule is an enhanced rule interface that uses pre-built mappings
+// ContextualRule is an enhanced rule interface that uses pre-built VAST
 type ContextualRule interface {
 	// Name returns the rule identifier
 	Name() string
 
-	// ValidateWithContext uses pre-established section-schema mappings
-	ValidateWithContext(ctx *ValidationContext) []Violation
+	// ValidateWithContext uses pre-established section-schema mappings via VAST
+	ValidateWithContext(ctx *vast.Context) []Violation
 
 	// GenerateContent generates markdown content for elements that match this rule
 	// Returns true if the rule handled content generation for this element
@@ -43,11 +44,11 @@ func NewValidator() *Validator {
 }
 
 // Validate runs all rules against a document
-func (v *Validator) Validate(doc *parser.Document, schema *schema.Schema) []Violation {
+func (v *Validator) Validate(doc *parser.Document, s *schema.Schema) []Violation {
 	violations := make([]Violation, 0)
 
-	// Create validation context with pre-built mappings
-	ctx := NewValidationContext(doc, schema)
+	// Create validation context with VAST
+	ctx := vast.NewContext(doc, s)
 
 	for _, rule := range v.rules {
 		// Try to use contextual validation if the rule supports it

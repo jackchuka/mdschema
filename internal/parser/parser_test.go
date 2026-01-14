@@ -261,11 +261,14 @@ func TestGenerateSlug(t *testing.T) {
 	}{
 		{"Simple Title", "simple-title"},
 		{"UPPERCASE", "uppercase"},
-		{"With   Multiple   Spaces", "with---multiple---spaces"}, // preserves multiple dashes
-		{"Special!@#Characters", "special!@#characters"},         // preserves special chars
+		{"With   Multiple   Spaces", "with-multiple-spaces"}, // collapses multiple hyphens (GitHub-like)
+		{"Special!@#Characters", "specialcharacters"},        // removes special chars (GitHub-like)
 		{"Numbers 123", "numbers-123"},
 		{"", ""},
 		{"Already-Slugged", "already-slugged"},
+		{"Hello, World!", "hello-world"},           // punctuation removed
+		{"foo_bar_baz", "foo_bar_baz"},             // underscores preserved
+		{"API Reference (v2)", "api-reference-v2"}, // parens removed
 	}
 
 	for _, tc := range tests {
@@ -373,5 +376,157 @@ func TestHeadingSlug(t *testing.T) {
 	}
 	if sections[1].Heading.Slug != "another-section" {
 		t.Errorf("slug = %q, want %q", sections[1].Heading.Slug, "another-section")
+	}
+}
+
+func TestHeadingWithInlineFormatting(t *testing.T) {
+	p := New()
+	content := []byte(`# **Bold** Heading
+
+## Heading with ` + "`code`" + `
+
+### Heading with *emphasis*
+
+#### Link to [something](url) here
+`)
+	doc, err := p.Parse("test.md", content)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	sections := doc.GetSections()
+	if len(sections) != 4 {
+		t.Fatalf("GetSections() returned %d sections, want 4", len(sections))
+	}
+
+	tests := []struct {
+		index    int
+		wantText string
+		wantSlug string
+	}{
+		{0, "Bold Heading", "bold-heading"},
+		{1, "Heading with code", "heading-with-code"},
+		{2, "Heading with emphasis", "heading-with-emphasis"},
+		{3, "Link to something here", "link-to-something-here"},
+	}
+
+	for _, tc := range tests {
+		if sections[tc.index].Heading.Text != tc.wantText {
+			t.Errorf("sections[%d].Heading.Text = %q, want %q", tc.index, sections[tc.index].Heading.Text, tc.wantText)
+		}
+		if sections[tc.index].Heading.Slug != tc.wantSlug {
+			t.Errorf("sections[%d].Heading.Slug = %q, want %q", tc.index, sections[tc.index].Heading.Slug, tc.wantSlug)
+		}
+	}
+}
+
+// TestSiblingContentNotCaptured verifies that elements from a sibling section
+// are not captured by a parent or its leaf child (tests top-down boundary fix)
+func TestSiblingContentNotCaptured(t *testing.T) {
+	p := New()
+	// Structure: Section A has child A1 (leaf), Section B is sibling to A with a code block
+	// Neither Section A nor its child A1 should capture B's code block
+	content := []byte(`# Section A
+
+## Section A1
+
+Content in A1
+
+# Section B
+
+` + "```go" + `
+func main() {}
+` + "```" + `
+`)
+	doc, err := p.Parse("test.md", content)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	// Find sections
+	var sectionA, sectionA1, sectionB *Section
+	for _, child := range doc.Root.Children {
+		if child.Heading.Text == "Section A" {
+			sectionA = child
+			for _, grandchild := range child.Children {
+				if grandchild.Heading.Text == "Section A1" {
+					sectionA1 = grandchild
+				}
+			}
+		}
+		if child.Heading.Text == "Section B" {
+			sectionB = child
+		}
+	}
+
+	if sectionA == nil || sectionA1 == nil || sectionB == nil {
+		t.Fatal("Could not find Section A, A1, or B")
+	}
+
+	// Verify Section A has no code blocks
+	if len(sectionA.CodeBlocks) != 0 {
+		t.Errorf("Section A should have 0 code blocks, got %d", len(sectionA.CodeBlocks))
+	}
+
+	// Verify Section A1 (leaf child) has no code blocks - this is the key test
+	if len(sectionA1.CodeBlocks) != 0 {
+		t.Errorf("Section A1 should have 0 code blocks, got %d (leaf child captured parent's sibling content)", len(sectionA1.CodeBlocks))
+	}
+
+	// Verify Section B has the code block
+	if len(sectionB.CodeBlocks) != 1 {
+		t.Errorf("Section B should have 1 code block, got %d", len(sectionB.CodeBlocks))
+	}
+
+	// Verify boundaries: A1 ends before B starts
+	if sectionA1.EndLine >= sectionB.StartLine {
+		t.Errorf("Section A1 EndLine (%d) should be less than Section B StartLine (%d)",
+			sectionA1.EndLine, sectionB.StartLine)
+	}
+
+	// Verify boundaries: A ends before B starts
+	if sectionA.EndLine >= sectionB.StartLine {
+		t.Errorf("Section A EndLine (%d) should be less than Section B StartLine (%d)",
+			sectionA.EndLine, sectionB.StartLine)
+	}
+}
+
+// TestIntroContentAttachedToRoot verifies that content before the first heading
+// is attached to the root section (Medium #1 fix)
+func TestIntroContentAttachedToRoot(t *testing.T) {
+	p := New()
+	content := []byte(`This is intro content with a [link](https://example.com).
+
+` + "```bash" + `
+echo "intro code block"
+` + "```" + `
+
+# First Heading
+
+Content after heading.
+`)
+	doc, err := p.Parse("test.md", content)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	// Root section should have the intro link and code block
+	if len(doc.Root.Links) != 1 {
+		t.Errorf("Root section should have 1 link (intro), got %d", len(doc.Root.Links))
+	}
+	if len(doc.Root.CodeBlocks) != 1 {
+		t.Errorf("Root section should have 1 code block (intro), got %d", len(doc.Root.CodeBlocks))
+	}
+
+	// The first heading section should not have the intro elements
+	if len(doc.Root.Children) < 1 {
+		t.Fatal("Expected at least 1 child section")
+	}
+	firstSection := doc.Root.Children[0]
+	if len(firstSection.Links) != 0 {
+		t.Errorf("First heading section should have 0 links, got %d", len(firstSection.Links))
+	}
+	if len(firstSection.CodeBlocks) != 0 {
+		t.Errorf("First heading section should have 0 code blocks, got %d", len(firstSection.CodeBlocks))
 	}
 }

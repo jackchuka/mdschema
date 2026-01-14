@@ -42,9 +42,9 @@ func FromDocument(doc *parser.Document) (*schema.Schema, error) {
 }
 
 func buildElement(section *parser.Section) schema.StructureElement {
-	heading := ""
+	var heading schema.HeadingPattern
 	if section.Heading != nil {
-		heading = headingPattern(section.Heading)
+		heading = schema.HeadingPattern{Pattern: headingPattern(section.Heading)}
 	}
 
 	var children []schema.StructureElement

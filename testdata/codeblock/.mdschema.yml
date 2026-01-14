@@ -1,10 +1,15 @@
 # Schema for codeblock rule tests
 structure:
-  - heading: "# [a-zA-Z0-9_\\- ]+"
+  - heading:
+      pattern: "# .*"
+      regex: true
+    optional: true
     children:
       - heading: "## Installation"
+        optional: true
         code_blocks:
           - { lang: bash, min: 1 }
       - heading: "## Usage"
+        optional: true
         code_blocks:
           - { lang: go, min: 2 }

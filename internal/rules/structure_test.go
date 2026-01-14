@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
 func TestNewStructureRule(t *testing.T) {
@@ -31,11 +32,11 @@ func TestStructureRuleValidMappings(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -56,12 +57,12 @@ func TestStructureRuleMissingRequired(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
-			{Heading: "## Installation", Optional: false}, // Required but missing
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+			{Heading: schema.HeadingPattern{Pattern: "## Installation"}, Optional: false}, // Required but missing
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -91,12 +92,12 @@ func TestStructureRuleOptionalMissing(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
-			{Heading: "## License", Optional: true}, // Optional and missing - should not be a violation
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+			{Heading: schema.HeadingPattern{Pattern: "## License"}, Optional: true}, // Optional and missing - should not be a violation
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -117,14 +118,14 @@ func TestStructureRuleWrongOrder(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title", Children: []schema.StructureElement{
-				{Heading: "## Installation"},
-				{Heading: "## Usage"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}, Children: []schema.StructureElement{
+				{Heading: schema.HeadingPattern{Pattern: "## Installation"}},
+				{Heading: schema.HeadingPattern{Pattern: "## Usage"}},
 			}},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -147,11 +148,11 @@ func TestStructureRuleGenerateContent(t *testing.T) {
 	var builder strings.Builder
 
 	element := schema.StructureElement{
-		Heading:  "## Section",
+		Heading:  schema.HeadingPattern{Pattern: "## Section"},
 		Optional: false,
 		Children: []schema.StructureElement{
-			{Heading: "### Child1", Optional: false},
-			{Heading: "### Child2", Optional: true},
+			{Heading: schema.HeadingPattern{Pattern: "### Child1"}, Optional: false},
+			{Heading: schema.HeadingPattern{Pattern: "### Child2"}, Optional: true},
 		},
 	}
 

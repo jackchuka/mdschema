@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
 func TestNewLinkValidationRule(t *testing.T) {
@@ -34,11 +35,11 @@ func TestLinkValidationNoRulesConfigured(t *testing.T) {
 	// Schema with no link rules
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -56,14 +57,14 @@ func TestLinkValidationValidAnchor(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			ValidateInternal: true,
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -84,14 +85,14 @@ func TestLinkValidationBrokenAnchor(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			ValidateInternal: true,
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -136,14 +137,14 @@ func TestLinkValidationValidFileLink(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			ValidateFiles: true,
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -173,14 +174,14 @@ func TestLinkValidationBrokenFileLink(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			ValidateFiles: true,
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -210,14 +211,14 @@ func TestLinkValidationBlockedDomain(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			BlockedDomains: []string{"blocked.com"},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -247,14 +248,14 @@ func TestLinkValidationAllowedDomains(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			AllowedDomains: []string{"github.com", "example.com"},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -284,14 +285,14 @@ func TestLinkValidationAllowedDomainsPass(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			AllowedDomains: []string{"github.com", "example.com"},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -312,14 +313,14 @@ func TestLinkValidationSubdomainBlocked(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			BlockedDomains: []string{"blocked.com"},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -352,14 +353,14 @@ func TestLinkValidationFileLinkWithAnchor(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			ValidateFiles: true,
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -377,7 +378,7 @@ func TestLinkValidationGenerateContent(t *testing.T) {
 	var builder strings.Builder
 
 	element := schema.StructureElement{
-		Heading: "## Section",
+		Heading: schema.HeadingPattern{Pattern: "## Section"},
 	}
 
 	result := rule.GenerateContent(&builder, element)
@@ -400,7 +401,7 @@ func TestLinkValidationInternalDisabled(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: "# Title"},
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
 		},
 		Links: &schema.LinkRule{
 			ValidateInternal: false, // Explicitly disabled
@@ -408,7 +409,7 @@ func TestLinkValidationInternalDisabled(t *testing.T) {
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
