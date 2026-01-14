@@ -20,8 +20,3 @@ func Info() string {
 	return fmt.Sprintf("mdschema %s (%s) built on %s with %s",
 		Version, Commit, Date, runtime.Version())
 }
-
-// Short returns just the version string
-func Short() string {
-	return Version
-}

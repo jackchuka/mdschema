@@ -8,11 +8,11 @@ import (
 	"github.com/jackchuka/mdschema/internal/schema"
 )
 
-// loadSchemas loads schemas based on command flags or discovery
-func loadSchemas() ([]*schema.Schema, error) {
-	if len(schemaFiles) > 0 {
+// loadSchemas loads schemas based on config or discovery
+func loadSchemas(cfg *Config) ([]*schema.Schema, error) {
+	if len(cfg.SchemaFiles) > 0 {
 		// Load explicitly specified schemas
-		loaded, err := schema.LoadMultiple(schemaFiles)
+		loaded, err := schema.LoadMultiple(cfg.SchemaFiles)
 		if err != nil {
 			return nil, err
 		}
