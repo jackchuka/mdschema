@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
 // LinkValidationRule validates internal and external links in the document
@@ -31,7 +32,7 @@ func (r *LinkValidationRule) Name() string {
 }
 
 // ValidateWithContext validates links based on schema configuration
-func (r *LinkValidationRule) ValidateWithContext(ctx *ValidationContext) []Violation {
+func (r *LinkValidationRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	violations := make([]Violation, 0)
 
 	// Skip if no link rules configured
@@ -41,17 +42,14 @@ func (r *LinkValidationRule) ValidateWithContext(ctx *ValidationContext) []Viola
 
 	linkRule := ctx.Schema.Links
 
-	// Collect all links from the document
-	links := r.collectAllLinks(ctx.Document.Root)
-
-	// Build a map of valid heading slugs
-	slugs := r.buildSlugMap(ctx.Document)
+	// Collect all links from the document (not just schema-matched sections)
+	links := r.collectAllLinks(ctx.Tree.Document.Root)
 
 	// Get document directory for relative path resolution
-	docDir := filepath.Dir(ctx.Document.Path)
+	docDir := filepath.Dir(ctx.Tree.Document.Path)
 
 	for _, link := range links {
-		violations = append(violations, r.validateLink(link, linkRule, slugs, docDir)...)
+		violations = append(violations, r.validateLink(link, linkRule, ctx, docDir)...)
 	}
 
 	return violations
@@ -69,22 +67,8 @@ func (r *LinkValidationRule) collectAllLinks(section *parser.Section) []*parser.
 	return links
 }
 
-// buildSlugMap creates a map of valid heading slugs from the document
-func (r *LinkValidationRule) buildSlugMap(doc *parser.Document) map[string]bool {
-	slugs := make(map[string]bool)
-
-	sections := doc.GetSections()
-	for _, section := range sections {
-		if section.Heading != nil && section.Heading.Slug != "" {
-			slugs[section.Heading.Slug] = true
-		}
-	}
-
-	return slugs
-}
-
 // validateLink validates a single link according to the rules
-func (r *LinkValidationRule) validateLink(link *parser.Link, rule *schema.LinkRule, slugs map[string]bool, docDir string) []Violation {
+func (r *LinkValidationRule) validateLink(link *parser.Link, rule *schema.LinkRule, ctx *vast.Context, docDir string) []Violation {
 	violations := make([]Violation, 0)
 
 	url := link.URL
@@ -92,7 +76,7 @@ func (r *LinkValidationRule) validateLink(link *parser.Link, rule *schema.LinkRu
 	// Anchor links (#section-name)
 	if anchor, found := strings.CutPrefix(url, "#"); found {
 		if rule.ValidateInternal {
-			if !slugs[anchor] {
+			if !ctx.HasSlug(anchor) {
 				violations = append(violations, Violation{
 					Rule:    r.Name(),
 					Message: fmt.Sprintf("Broken internal link: anchor '%s' does not exist in the document", url),

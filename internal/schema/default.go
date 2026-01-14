@@ -8,7 +8,9 @@ func CreateDefaultFile(path string) error {
 # See: https://github.com/jackchuka/mdschema for documentation
 
 structure:
-  - heading: "# [a-zA-Z0-9_\\- ]+"
+  - heading:
+      pattern: "# [a-zA-Z0-9_\\- ]+"
+      regex: true
     children: # if children the content must be in this root section
       - heading: "## Features"
         optional: true

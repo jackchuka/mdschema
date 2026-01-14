@@ -2,18 +2,26 @@
 # Ensures step-by-step guides follow a consistent format
 
 structure:
-  - heading: "# .*" # Tutorial title
+  - heading:
+      pattern: "# .*"
+      regex: true
     children:
       - heading: "## Prerequisites"
         required_text:
           - "install"
-      - heading: "## Step 1: *" # Step 1 with any subtitle
+      - heading:
+          pattern: "## Step 1: .*"
+          regex: true
         code_blocks:
           - { min: 1 } # Each step needs at least one code example
-      - heading: "## Step 2: *"
+      - heading:
+          pattern: "## Step 2: .*"
+          regex: true
         code_blocks:
           - { min: 1 }
-      - heading: "## Step 3: *"
+      - heading:
+          pattern: "## Step 3: .*"
+          regex: true
         optional: true # Additional steps are optional
         code_blocks:
           - { min: 1 }

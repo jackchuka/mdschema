@@ -39,12 +39,22 @@ const (
 )
 
 // findFiles finds all files matching the given glob patterns with validation and limits
+// Supports ** for recursive directory matching (e.g., docs/**/*.md)
 func findFiles(patterns []string) ([]string, error) {
 	seen := make(map[string]bool)
 	var files []string
 
 	for _, pattern := range patterns {
-		matches, err := filepath.Glob(pattern)
+		var matches []string
+		var err error
+
+		// Check if pattern contains ** for recursive matching
+		if containsDoublestar(pattern) {
+			matches, err = globWithDoublestar(pattern)
+		} else {
+			matches, err = filepath.Glob(pattern)
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("invalid glob pattern %s: %w", pattern, err)
 		}
@@ -108,4 +118,124 @@ func findFiles(patterns []string) ([]string, error) {
 	}
 
 	return files, nil
+}
+
+// containsDoublestar checks if a pattern contains **
+func containsDoublestar(pattern string) bool {
+	return len(pattern) >= 2 && (pattern == "**" ||
+		(len(pattern) >= 3 && (pattern[:3] == "**/" || pattern[len(pattern)-3:] == "/**")) ||
+		(len(pattern) >= 4 && contains(pattern, "/**/")))
+}
+
+// contains checks if s contains substr
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && indexOf(s, substr) >= 0)
+}
+
+// indexOf returns the index of substr in s, or -1 if not found
+func indexOf(s, substr string) int {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
+}
+
+// globWithDoublestar handles glob patterns containing **
+// It walks the directory tree and matches files against the pattern
+func globWithDoublestar(pattern string) ([]string, error) {
+	var matches []string
+
+	// Split pattern at **
+	parts := splitDoublestar(pattern)
+	if len(parts) == 0 {
+		return nil, nil
+	}
+
+	// Get the base directory (before **)
+	baseDir := parts[0]
+	if baseDir == "" {
+		baseDir = "."
+	}
+
+	// Get the pattern after ** (if any)
+	var suffix string
+	if len(parts) > 1 {
+		suffix = parts[1]
+	}
+
+	// Walk the directory tree
+	err := filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			// Skip permission errors and continue walking
+			if os.IsPermission(err) {
+				return nil
+			}
+			return err
+		}
+
+		// Skip directories for matching (but continue walking into them)
+		if info.IsDir() {
+			return nil
+		}
+
+		// If there's a suffix pattern, match against it
+		if suffix != "" {
+			// Get the relative path from base
+			relPath, err := filepath.Rel(baseDir, path)
+			if err != nil {
+				return nil
+			}
+
+			// Match the filename or relative path against the suffix pattern
+			matched, err := filepath.Match(suffix, filepath.Base(path))
+			if err != nil {
+				return err
+			}
+			if !matched {
+				// Also try matching the full relative path for patterns like **/*.md
+				matched, _ = filepath.Match(suffix, relPath)
+			}
+			if !matched {
+				return nil
+			}
+		}
+
+		matches = append(matches, path)
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return matches, nil
+}
+
+// splitDoublestar splits a pattern at ** into base directory and suffix
+func splitDoublestar(pattern string) []string {
+	// Handle different ** positions
+	idx := indexOf(pattern, "/**/")
+	if idx >= 0 {
+		return []string{pattern[:idx], pattern[idx+4:]}
+	}
+
+	// Pattern ends with /**
+	if len(pattern) >= 3 && pattern[len(pattern)-3:] == "/**" {
+		return []string{pattern[:len(pattern)-3], ""}
+	}
+
+	// Pattern starts with **/
+	if len(pattern) >= 3 && pattern[:3] == "**/" {
+		return []string{".", pattern[3:]}
+	}
+
+	// Pattern is just **
+	if pattern == "**" {
+		return []string{".", ""}
+	}
+
+	// No ** found (shouldn't happen if containsDoublestar returned true)
+	return []string{pattern}
 }

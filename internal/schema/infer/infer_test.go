@@ -42,19 +42,19 @@ Steps
 	want := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Project Title",
+				Heading: schema.HeadingPattern{Pattern: "# Project Title"},
 				Children: []schema.StructureElement{
 					{
-						Heading: "## Overview",
+						Heading: schema.HeadingPattern{Pattern: "## Overview"},
 						Children: []schema.StructureElement{
-							{Heading: "### Background"},
+							{Heading: schema.HeadingPattern{Pattern: "### Background"}},
 						},
 					},
 					{
-						Heading: "## Usage",
+						Heading: schema.HeadingPattern{Pattern: "## Usage"},
 						Children: []schema.StructureElement{
-							{Heading: "### Install"},
-							{Heading: "### Run"},
+							{Heading: schema.HeadingPattern{Pattern: "### Install"}},
+							{Heading: schema.HeadingPattern{Pattern: "### Run"}},
 						},
 					},
 				},
@@ -111,11 +111,11 @@ More
 		t.Fatalf("expected structure elements, got none")
 	}
 
-	if got.Structure[0].Heading != "# First" {
-		t.Fatalf("expected first heading '# First', got %q", got.Structure[0].Heading)
+	if got.Structure[0].Heading.Pattern != "# First" {
+		t.Fatalf("expected first heading '# First', got %q", got.Structure[0].Heading.Pattern)
 	}
 
-	if len(got.Structure[0].Children) != 1 || got.Structure[0].Children[0].Heading != "## Child (Optional)" {
+	if len(got.Structure[0].Children) != 1 || got.Structure[0].Children[0].Heading.Pattern != "## Child (Optional)" {
 		t.Fatalf("expected child heading '## Child (Optional)', got %#v", got.Structure[0].Children)
 	}
 }

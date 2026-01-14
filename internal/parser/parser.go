@@ -53,7 +53,6 @@ func (p *Parser) Parse(path string, content []byte) (*Document, error) {
 	images := make([]*Image, 0)
 
 	// Walk the AST and extract elements
-	var currentHeading *Heading
 	if err := ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
@@ -63,10 +62,9 @@ func (p *Parser) Parse(path string, content []byte) (*Document, error) {
 		case *ast.Heading:
 			heading := extractHeading(node, content)
 			headings = append(headings, heading)
-			currentHeading = heading
 
 		case *ast.FencedCodeBlock:
-			block := extractCodeBlock(node, content, currentHeading)
+			block := extractCodeBlock(node, content)
 			codeBlocks = append(codeBlocks, block)
 
 		case *ast.Link:
@@ -78,7 +76,7 @@ func (p *Parser) Parse(path string, content []byte) (*Document, error) {
 			lists = append(lists, list)
 
 		case *east.Table:
-			table := extractTable(node, content, currentHeading)
+			table := extractTable(node, content)
 			tables = append(tables, table)
 
 		case *ast.Image:
@@ -92,7 +90,7 @@ func (p *Parser) Parse(path string, content []byte) (*Document, error) {
 	}
 
 	// Build hierarchical structure
-	root := p.buildHierarchicalSections(headings, codeBlocks, tables, links, images, content)
+	root := p.buildHierarchicalSections(headings, codeBlocks, tables, links, images, lists, content)
 
 	// Create the document
 	doc := &Document{

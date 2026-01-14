@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 )
 
 func TestNewRequiredTextRule(t *testing.T) {
@@ -32,15 +33,15 @@ func TestRequiredTextExactMatch(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
-					RequiredText: []string{"important text"},
+					RequiredText: []schema.RequiredTextPattern{{Pattern: "important text"}},
 				},
 			},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -62,15 +63,15 @@ func TestRequiredTextMissing(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
-					RequiredText: []string{"important text"},
+					RequiredText: []schema.RequiredTextPattern{{Pattern: "important text"}},
 				},
 			},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -98,19 +99,21 @@ func TestRequiredTextRegexMatch(t *testing.T) {
 		t.Fatalf("Parse() error: %v", err)
 	}
 
-	// Use a regex that doesn't require start anchor since content includes full section
+	// Use a regex with explicit regex: true flag
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
-					RequiredText: []string{"(?i)version: \\d+\\.\\d+\\.\\d+"},
+					RequiredText: []schema.RequiredTextPattern{
+						{Pattern: "(?i)version: \\d+\\.\\d+\\.\\d+", Regex: true},
+					},
 				},
 			},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -132,15 +135,17 @@ func TestRequiredTextRegexNoMatch(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
-					RequiredText: []string{"^Version: \\d+\\.\\d+\\.\\d+"},
+					RequiredText: []schema.RequiredTextPattern{
+						{Pattern: "^Version: \\d+\\.\\d+\\.\\d+", Regex: true},
+					},
 				},
 			},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -159,15 +164,17 @@ func TestRequiredTextCaseInsensitive(t *testing.T) {
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
 			{
-				Heading: "# Title",
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
-					RequiredText: []string{"(?i)important note"},
+					RequiredText: []schema.RequiredTextPattern{
+						{Pattern: "(?i)important note", Regex: true},
+					},
 				},
 			},
 		},
 	}
 
-	ctx := NewValidationContext(doc, s)
+	ctx := vast.NewContext(doc, s)
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -181,9 +188,12 @@ func TestRequiredTextGenerateContent(t *testing.T) {
 	var builder strings.Builder
 
 	element := schema.StructureElement{
-		Heading: "## Section",
+		Heading: schema.HeadingPattern{Pattern: "## Section"},
 		SectionRules: &schema.SectionRules{
-			RequiredText: []string{"important text", "another phrase"},
+			RequiredText: []schema.RequiredTextPattern{
+				{Pattern: "important text"},
+				{Pattern: "another phrase"},
+			},
 		},
 	}
 
@@ -207,7 +217,7 @@ func TestRequiredTextGenerateContentNoRules(t *testing.T) {
 	var builder strings.Builder
 
 	element := schema.StructureElement{
-		Heading: "## Section",
+		Heading: schema.HeadingPattern{Pattern: "## Section"},
 	}
 
 	result := rule.GenerateContent(&builder, element)
@@ -217,26 +227,30 @@ func TestRequiredTextGenerateContentNoRules(t *testing.T) {
 	}
 }
 
-func TestContentContainsText(t *testing.T) {
+func TestContentContainsPattern(t *testing.T) {
 	rule := NewRequiredTextRule()
 
 	tests := []struct {
-		content      string
-		requiredText string
-		want         bool
+		content string
+		pattern string
+		isRegex bool
+		want    bool
 	}{
-		{"Hello world", "world", true},
-		{"Hello world", "foo", false},
-		{"Version: 1.0.0", "^Version:", true},
-		{"No match here", "^Version:", false},
-		{"HELLO WORLD", "(?i)hello", true},
+		{"Hello world", "world", false, true},
+		{"Hello world", "foo", false, false},
+		{"Version: 1.0.0", "^Version:", true, true},
+		{"No match here", "^Version:", true, false},
+		{"HELLO WORLD", "(?i)hello", true, true},
+		// Without regex flag, regex metacharacters are treated literally
+		{"Hello world", "^Hello", false, false},
+		{"^Hello world", "^Hello", false, true},
 	}
 
 	for _, tc := range tests {
-		got := rule.contentContainsText(tc.content, tc.requiredText)
+		got := rule.contentContainsPattern(tc.content, tc.pattern, tc.isRegex)
 		if got != tc.want {
-			t.Errorf("contentContainsText(%q, %q) = %v, want %v",
-				tc.content, tc.requiredText, got, tc.want)
+			t.Errorf("contentContainsPattern(%q, %q, %v) = %v, want %v",
+				tc.content, tc.pattern, tc.isRegex, got, tc.want)
 		}
 	}
 }

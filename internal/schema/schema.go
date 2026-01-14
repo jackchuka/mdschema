@@ -37,8 +37,8 @@ type LinkRule struct {
 // StructureElement represents an element in the document structure
 // Supports hierarchical structure with children and section-scoped rules
 type StructureElement struct {
-	// Heading pattern
-	Heading string `yaml:"heading,omitempty"`
+	// Heading pattern (string or {pattern: "...", regex: true})
+	Heading HeadingPattern `yaml:"heading,omitempty"`
 
 	// Optional element flag
 	Optional bool `yaml:"optional,omitempty"`
@@ -53,27 +53,71 @@ type StructureElement struct {
 // UnmarshalYAML implements custom unmarshaling to support the new hierarchical syntax
 func (se *StructureElement) UnmarshalYAML(node *yaml.Node) error {
 	if node.Kind == yaml.ScalarNode {
-		se.Heading = node.Value
+		se.Heading = HeadingPattern{Pattern: node.Value}
 		return nil
 	}
 
 	// Object syntax - use a temporary struct to avoid infinite recursion
 	type structureElementAlias StructureElement
 	alias := (*structureElementAlias)(se)
-	if err := node.Decode(alias); err != nil {
-		return err
+	return node.Decode(alias)
+}
+
+// HeadingPattern defines a heading pattern with optional regex support
+type HeadingPattern struct {
+	// Pattern is the heading text or regex pattern to match
+	Pattern string `yaml:"pattern,omitempty"`
+
+	// Regex indicates the pattern should be treated as a regular expression
+	Regex bool `yaml:"regex,omitempty"`
+}
+
+// UnmarshalYAML implements custom unmarshaling to support both string and object syntax
+func (h *HeadingPattern) UnmarshalYAML(node *yaml.Node) error {
+	// Support simple string syntax: "## Features"
+	if node.Kind == yaml.ScalarNode {
+		h.Pattern = node.Value
+		h.Regex = false
+		return nil
 	}
 
-	return nil
+	// Object syntax: { pattern: "## .*", regex: true }
+	type headingPatternAlias HeadingPattern
+	alias := (*headingPatternAlias)(h)
+	return node.Decode(alias)
 }
 
 // SectionRules defines validation rules scoped to a specific heading/section
 type SectionRules struct {
 	// Required text/substrings within the section
-	RequiredText []string `yaml:"required_text,omitempty"`
+	RequiredText []RequiredTextPattern `yaml:"required_text,omitempty"`
 
 	// Code block requirements within this section
 	CodeBlocks []CodeBlockRule `yaml:"code_blocks,omitempty"`
+}
+
+// RequiredTextPattern defines a required text pattern with optional regex support
+type RequiredTextPattern struct {
+	// Pattern is the text or regex pattern to match
+	Pattern string `yaml:"pattern,omitempty"`
+
+	// Regex indicates the pattern should be treated as a regular expression
+	Regex bool `yaml:"regex,omitempty"`
+}
+
+// UnmarshalYAML implements custom unmarshaling to support both string and object syntax
+func (r *RequiredTextPattern) UnmarshalYAML(node *yaml.Node) error {
+	// Support simple string syntax: "some text"
+	if node.Kind == yaml.ScalarNode {
+		r.Pattern = node.Value
+		r.Regex = false
+		return nil
+	}
+
+	// Object syntax: { pattern: "...", regex: true }
+	type requiredTextPatternAlias RequiredTextPattern
+	alias := (*requiredTextPatternAlias)(r)
+	return node.Decode(alias)
 }
 
 // CodeBlockRule defines validation for code blocks within a section

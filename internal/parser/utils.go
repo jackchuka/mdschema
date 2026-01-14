@@ -72,9 +72,36 @@ func calculateLineColumn(content []byte, offset int) (line, col int) {
 }
 
 func generateSlug(text string) string {
-	// Simple slug generation
+	// GitHub-compatible slug generation:
+	// 1. Convert to lowercase
+	// 2. Remove characters that aren't alphanumeric, space, hyphen, or underscore
+	// 3. Replace spaces with hyphens
+	// 4. Collapse multiple consecutive hyphens
 	slug := strings.ToLower(text)
-	slug = strings.ReplaceAll(slug, " ", "-")
+
+	// Build slug character by character
+	var result strings.Builder
+	for _, r := range slug {
+		switch {
+		case r >= 'a' && r <= 'z':
+			result.WriteRune(r)
+		case r >= '0' && r <= '9':
+			result.WriteRune(r)
+		case r == ' ' || r == '-':
+			result.WriteRune('-')
+		case r == '_':
+			result.WriteRune('_')
+			// Skip all other characters (punctuation, special chars, etc.)
+		}
+	}
+
+	slug = result.String()
+
+	// Collapse multiple consecutive hyphens
+	for strings.Contains(slug, "--") {
+		slug = strings.ReplaceAll(slug, "--", "-")
+	}
+
 	slug = strings.Trim(slug, "-")
 	return slug
 }

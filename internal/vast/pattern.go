@@ -1,4 +1,4 @@
-package rules
+package vast
 
 import (
 	"regexp"
@@ -7,20 +7,20 @@ import (
 	"github.com/jackchuka/mdschema/internal/parser"
 )
 
-// PatternMatcher provides utilities for matching heading patterns
+// PatternMatcher provides utilities for matching heading patterns.
 type PatternMatcher struct {
 	// Cache compiled regexes to avoid recompilation
 	regexCache map[string]*regexp.Regexp
 }
 
-// NewPatternMatcher creates a new pattern matcher with caching
+// NewPatternMatcher creates a new pattern matcher with caching.
 func NewPatternMatcher() *PatternMatcher {
 	return &PatternMatcher{
 		regexCache: make(map[string]*regexp.Regexp),
 	}
 }
 
-// MatchesHeadingPattern checks if a heading matches a pattern with explicit regex flag
+// MatchesHeadingPattern checks if a heading matches a pattern with explicit regex flag.
 func (pm *PatternMatcher) MatchesHeadingPattern(heading *parser.Heading, pattern string, isRegex bool) bool {
 	// Construct full heading text with level markers
 	levelMarkers := strings.Repeat("#", heading.Level)
@@ -35,7 +35,7 @@ func (pm *PatternMatcher) MatchesHeadingPattern(heading *parser.Heading, pattern
 	return pm.matchRegexPattern(fullHeading, expectedPattern)
 }
 
-// matchRegexPattern compiles and matches a regex pattern with caching
+// matchRegexPattern compiles and matches a regex pattern with caching.
 func (pm *PatternMatcher) matchRegexPattern(text, pattern string) bool {
 	// Auto-anchor if not already anchored for explicit regex
 	if !strings.HasPrefix(pattern, "^") {
