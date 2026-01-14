@@ -1,14 +1,17 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
-	"os"
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/reporter"
 	"github.com/jackchuka/mdschema/internal/rules"
 	"github.com/spf13/cobra"
 )
+
+// ErrViolationsFound is returned when validation finds violations
+var ErrViolationsFound = errors.New("validation violations found")
 
 // NewCheckCmd creates the check command
 func NewCheckCmd() *cobra.Command {
@@ -18,14 +21,15 @@ func NewCheckCmd() *cobra.Command {
 		Long:  `Check validates Markdown files matching the given glob patterns against the configured schema.`,
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCheck(args)
+			cfg := ConfigFromContext(cmd.Context())
+			return runCheck(cfg, args)
 		},
 	}
 }
 
-func runCheck(globs []string) error {
+func runCheck(cfg *Config, globs []string) error {
 	// Load schemas
-	schemas, err := loadSchemas()
+	schemas, err := loadSchemas(cfg)
 	if err != nil {
 		return fmt.Errorf("loading schemas: %w", err)
 	}
@@ -67,14 +71,14 @@ func runCheck(globs []string) error {
 	}
 
 	// Report violations
-	rep := reporter.New(reporter.Format(outputFormat))
+	rep := reporter.New(reporter.Format(cfg.OutputFormat))
 	if err := rep.Report(allViolations); err != nil {
 		return fmt.Errorf("reporting violations: %w", err)
 	}
 
-	// Exit with non-zero status if violations found
+	// Return error if violations found (caller handles exit code)
 	if len(allViolations) > 0 {
-		os.Exit(1)
+		return ErrViolationsFound
 	}
 
 	return nil

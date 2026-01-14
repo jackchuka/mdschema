@@ -1,4 +1,4 @@
-package testdata
+package integration
 
 import (
 	"testing"
@@ -7,6 +7,9 @@ import (
 	"github.com/jackchuka/mdschema/internal/rules"
 	"github.com/jackchuka/mdschema/internal/schema"
 )
+
+// testdataDir is the path to the testdata directory from this test file
+const testdataDir = "../../testdata/"
 
 // TestCase represents a single test case
 type TestCase struct {
@@ -23,83 +26,83 @@ func TestBaseSchemaValidation(t *testing.T) {
 		// Valid cases
 		{
 			Name:       "complete valid document",
-			FilePath:   "base/valid/complete.md",
-			SchemaPath: ".mdschema.yml",
+			FilePath:   testdataDir + "base/valid/complete.md",
+			SchemaPath: testdataDir + ".mdschema.yml",
 			ShouldPass: true,
 		},
 		{
 			Name:       "minimal valid document",
-			FilePath:   "base/valid/minimal.md",
-			SchemaPath: ".mdschema.yml",
+			FilePath:   testdataDir + "base/valid/minimal.md",
+			SchemaPath: testdataDir + ".mdschema.yml",
 			ShouldPass: true,
 		},
 		{
 			Name:       "document with LICENSE",
-			FilePath:   "base/valid/with_license.md",
-			SchemaPath: ".mdschema.yml",
+			FilePath:   testdataDir + "base/valid/with_license.md",
+			SchemaPath: testdataDir + ".mdschema.yml",
 			ShouldPass: true,
 		},
 		{
 			Name:       "document with nested sections",
-			FilePath:   "base/valid/nested.md",
-			SchemaPath: ".mdschema.yml",
+			FilePath:   testdataDir + "base/valid/nested.md",
+			SchemaPath: testdataDir + ".mdschema.yml",
 			ShouldPass: true,
 		},
 
 		// Invalid cases
 		{
 			Name:         "missing root heading",
-			FilePath:     "base/invalid/missing_root.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/missing_root.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "structure",
 		},
 		{
 			Name:         "missing Installation section",
-			FilePath:     "base/invalid/missing_installation.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/missing_installation.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "structure",
 		},
 		{
 			Name:         "missing Usage section",
-			FilePath:     "base/invalid/missing_usage.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/missing_usage.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "structure",
 		},
 		{
 			Name:         "Installation without bash code",
-			FilePath:     "base/invalid/no_bash_code.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/no_bash_code.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "codeblock",
 		},
 		{
 			Name:         "Usage with insufficient Go code",
-			FilePath:     "base/invalid/insufficient_go_code.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/insufficient_go_code.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "codeblock",
 		},
 		{
 			Name:         "sections in wrong order",
-			FilePath:     "base/invalid/wrong_order.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/wrong_order.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "structure",
 		},
 		{
 			Name:         "children outside parent section",
-			FilePath:     "base/invalid/children_outside_parent.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/children_outside_parent.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "structure",
 		},
 		{
 			Name:         "root heading pattern mismatch",
-			FilePath:     "base/invalid/invalid_root_pattern.md",
-			SchemaPath:   ".mdschema.yml",
+			FilePath:     testdataDir + "base/invalid/invalid_root_pattern.md",
+			SchemaPath:   testdataDir + ".mdschema.yml",
 			ShouldPass:   false,
 			ExpectedRule: "structure",
 		},
@@ -167,9 +170,9 @@ func getUniqueRules(violations []rules.Violation) []string {
 		ruleMap[v.Rule] = true
 	}
 
-	var rules []string
+	var ruleNames []string
 	for rule := range ruleMap {
-		rules = append(rules, rule)
+		ruleNames = append(ruleNames, rule)
 	}
-	return rules
+	return ruleNames
 }

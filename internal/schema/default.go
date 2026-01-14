@@ -26,5 +26,5 @@ structure:
   - heading: "# LICENSE"
     optional: true
 `
-	return os.WriteFile(path, []byte(content), 0644)
+	return os.WriteFile(path, []byte(content), 0o644)
 }

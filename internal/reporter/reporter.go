@@ -20,6 +20,13 @@ const (
 
 // New creates a reporter for the specified format
 func New(format Format) Reporter {
-	// Only text format supported for now
-	return NewTextReporter()
+	switch format {
+	case FormatText:
+		return NewTextReporter()
+	case FormatSARIF, FormatJUnit:
+		// TODO: SARIF and JUnit reporters not yet implemented
+		return NewTextReporter()
+	default:
+		return NewTextReporter()
+	}
 }

@@ -25,15 +25,19 @@ type Validator struct {
 	rules []ContextualRule
 }
 
+// defaultRules returns the standard set of validation rules for v0.1 DSL
+func defaultRules() []ContextualRule {
+	return []ContextualRule{
+		NewStructureRule(),
+		NewRequiredTextRule(),
+		NewCodeBlockRule(),
+	}
+}
+
 // NewValidator creates a new validator with default rules for v0.1 DSL
 func NewValidator() *Validator {
 	return &Validator{
-		rules: []ContextualRule{
-			NewStructureRule(),
-			NewRequiredTextRule(),
-			NewCodeBlockRule(),
-			// Add more rules as needed
-		},
+		rules: defaultRules(),
 	}
 }
 
@@ -56,11 +60,7 @@ func (v *Validator) Validate(doc *parser.Document, schema *schema.Schema) []Viol
 // NewGenerator creates a generator that uses the same rules as the validator
 func NewGenerator() *Generator {
 	return &Generator{
-		rules: []ContextualRule{
-			NewStructureRule(), // Generates structural guidance and ordering info
-			NewRequiredTextRule(),
-			NewCodeBlockRule(),
-		},
+		rules: defaultRules(),
 	}
 }
 

@@ -19,11 +19,12 @@ func NewGenerateCmd() *cobra.Command {
 		Long:  `Generate a markdown file template that matches the given schema structure.`,
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg := ConfigFromContext(cmd.Context())
 			var schemaFile string
 			if len(args) > 0 {
 				schemaFile = args[0]
 			}
-			return runGenerate(schemaFile, outputFile)
+			return runGenerate(cfg, schemaFile, outputFile)
 		},
 	}
 
@@ -32,7 +33,7 @@ func NewGenerateCmd() *cobra.Command {
 	return cmd
 }
 
-func runGenerate(schemaFile, outputFile string) error {
+func runGenerate(cfg *Config, schemaFile, outputFile string) error {
 	// Load schema
 	var s *schema.Schema
 	var err error
@@ -44,7 +45,7 @@ func runGenerate(schemaFile, outputFile string) error {
 		}
 	} else {
 		// Load schemas using existing utility
-		schemas, err := loadSchemas()
+		schemas, err := loadSchemas(cfg)
 		if err != nil {
 			return fmt.Errorf("loading schemas: %w", err)
 		}
@@ -60,7 +61,7 @@ func runGenerate(schemaFile, outputFile string) error {
 
 	// Output to file or stdout
 	if outputFile != "" {
-		err := os.WriteFile(outputFile, []byte(content), 0644)
+		err := os.WriteFile(outputFile, []byte(content), 0o644)
 		if err != nil {
 			return fmt.Errorf("writing to %s: %w", outputFile, err)
 		}

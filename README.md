@@ -121,6 +121,16 @@ mdschema generate -o template.md
 mdschema init
 ```
 
+### `derive` - Infer Schema from Document
+
+```bash
+# Infer schema from existing markdown, output to stdout
+mdschema derive README.md
+
+# Save inferred schema to a file
+mdschema derive README.md -o inferred-schema.yml
+```
+
 ## Examples
 
 ### Basic README Schema
