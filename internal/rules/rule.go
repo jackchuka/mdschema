@@ -31,6 +31,7 @@ func defaultRules() []ContextualRule {
 		NewStructureRule(),
 		NewRequiredTextRule(),
 		NewCodeBlockRule(),
+		NewLinkValidationRule(),
 	}
 }
 

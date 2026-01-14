@@ -131,6 +131,38 @@ func (p *Parser) setEndLinesAndContent(section *Section, codeBlocks []*CodeBlock
 				}
 			}
 		}
+
+		for _, link := range links {
+			if link.Line >= section.StartLine && link.Line <= section.EndLine {
+				// Check if it belongs to a child section
+				belongsToChild := false
+				for _, child := range section.Children {
+					if link.Line >= child.StartLine && link.Line <= child.EndLine {
+						belongsToChild = true
+						break
+					}
+				}
+				if !belongsToChild {
+					section.Links = append(section.Links, link)
+				}
+			}
+		}
+
+		for _, image := range images {
+			if image.Line >= section.StartLine && image.Line <= section.EndLine {
+				// Check if it belongs to a child section
+				belongsToChild := false
+				for _, child := range section.Children {
+					if image.Line >= child.StartLine && image.Line <= child.EndLine {
+						belongsToChild = true
+						break
+					}
+				}
+				if !belongsToChild {
+					section.Images = append(section.Images, image)
+				}
+			}
+		}
 	}
 
 	// Recursively process children
