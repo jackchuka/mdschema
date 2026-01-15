@@ -4,10 +4,11 @@ import "github.com/yuin/goldmark/ast"
 
 // Document represents a parsed Markdown document with hierarchical structure
 type Document struct {
-	Path    string
-	Content []byte
-	AST     ast.Node
-	Root    *Section // Root section containing the entire document tree
+	Path        string
+	Content     []byte
+	AST         ast.Node
+	Root        *Section     // Root section containing the entire document tree
+	FrontMatter *FrontMatter // Optional front matter at document start
 }
 
 // GetSections returns all sections in document order

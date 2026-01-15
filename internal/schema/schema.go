@@ -14,6 +14,9 @@ type Schema struct {
 
 	// Global heading validation rules
 	HeadingRules *HeadingRules `yaml:"heading_rules,omitempty"`
+
+	// Frontmatter validation rules
+	Frontmatter *FrontmatterConfig `yaml:"frontmatter,omitempty"`
 }
 
 // LinkRule defines validation rules for links in the document
@@ -212,4 +215,28 @@ type HeadingRules struct {
 
 	// MaxDepth limits the maximum heading depth (1-6, where 1 is h1)
 	MaxDepth int `yaml:"max_depth,omitempty"`
+}
+
+// FrontmatterConfig defines validation rules for YAML frontmatter
+type FrontmatterConfig struct {
+	// Required indicates frontmatter must be present
+	Required bool `yaml:"required,omitempty"`
+
+	// Fields defines the required/optional fields and their constraints
+	Fields []FrontmatterField `yaml:"fields,omitempty"`
+}
+
+// FrontmatterField defines a single frontmatter field requirement
+type FrontmatterField struct {
+	// Name is the field name (required)
+	Name string `yaml:"name"`
+
+	// Required indicates whether this field must be present
+	Required bool `yaml:"required,omitempty"`
+
+	// Type is the expected type: "string", "number", "boolean", "array", "date"
+	Type string `yaml:"type,omitempty"`
+
+	// Format specifies format validation (e.g., "date" for YYYY-MM-DD)
+	Format string `yaml:"format,omitempty"`
 }

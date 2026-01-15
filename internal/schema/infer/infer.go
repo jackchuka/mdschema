@@ -1,8 +1,6 @@
 package infer
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"strings"
 
@@ -24,13 +22,12 @@ func FromDocument(doc *parser.Document) (*schema.Schema, error) {
 		return nil, fmt.Errorf("document has no headings to infer structure")
 	}
 
-	frontMatterEnd, hasFrontMatter := detectFrontMatter(doc.Content)
+	// Note: Frontmatter is now stripped by the parser before parsing,
+	// so we don't need to skip sections based on frontmatter line numbers.
+	// The parser extracts frontmatter into doc.FrontMatter.
 
 	structure := make([]schema.StructureElement, 0, len(doc.Root.Children))
 	for _, section := range doc.Root.Children {
-		if hasFrontMatter && section.StartLine <= frontMatterEnd {
-			continue
-		}
 		structure = append(structure, buildElement(section))
 	}
 
@@ -72,29 +69,4 @@ func headingPattern(h *parser.Heading) string {
 		return prefix
 	}
 	return fmt.Sprintf("%s %s", prefix, text)
-}
-
-func detectFrontMatter(content []byte) (endLine int, ok bool) {
-	scanner := bufio.NewScanner(bytes.NewReader(content))
-	lineNum := 0
-
-	if !scanner.Scan() {
-		return 0, false
-	}
-	lineNum++
-	line := scanner.Text()
-	line = strings.TrimPrefix(line, "\ufeff")
-	if strings.TrimSpace(line) != "---" {
-		return 0, false
-	}
-
-	for scanner.Scan() {
-		lineNum++
-		trimmed := strings.TrimSpace(scanner.Text())
-		if trimmed == "---" || trimmed == "..." {
-			return lineNum, true
-		}
-	}
-
-	return 0, false
 }
