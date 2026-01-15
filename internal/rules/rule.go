@@ -31,7 +31,12 @@ func defaultRules() []ContextualRule {
 	return []ContextualRule{
 		NewStructureRule(),
 		NewRequiredTextRule(),
+		NewForbiddenTextRule(),
 		NewCodeBlockRule(),
+		NewImageRule(),
+		NewTableRule(),
+		NewListRule(),
+		NewWordCountRule(),
 		NewLinkValidationRule(),
 	}
 }

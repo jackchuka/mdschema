@@ -92,8 +92,23 @@ type SectionRules struct {
 	// Required text/substrings within the section
 	RequiredText []RequiredTextPattern `yaml:"required_text,omitempty"`
 
+	// Forbidden text patterns that must NOT appear
+	ForbiddenText []ForbiddenTextPattern `yaml:"forbidden_text,omitempty"`
+
 	// Code block requirements within this section
 	CodeBlocks []CodeBlockRule `yaml:"code_blocks,omitempty"`
+
+	// Image requirements within this section
+	Images []ImageRule `yaml:"images,omitempty"`
+
+	// Table requirements within this section
+	Tables []TableRule `yaml:"tables,omitempty"`
+
+	// List requirements within this section
+	Lists []ListRule `yaml:"lists,omitempty"`
+
+	// Word count requirements for the section
+	WordCount *WordCountRule `yaml:"word_count,omitempty"`
 }
 
 // RequiredTextPattern defines a required text pattern with optional regex support
@@ -125,4 +140,58 @@ type CodeBlockRule struct {
 	Lang string `yaml:"lang"`
 	Min  int    `yaml:"min,omitempty"`
 	Max  int    `yaml:"max,omitempty"`
+}
+
+// ForbiddenTextPattern defines a text pattern that must NOT appear
+type ForbiddenTextPattern struct {
+	// Pattern is the text or regex pattern to match
+	Pattern string `yaml:"pattern,omitempty"`
+
+	// Regex indicates the pattern should be treated as a regular expression
+	Regex bool `yaml:"regex,omitempty"`
+}
+
+// UnmarshalYAML implements custom unmarshaling to support both string and object syntax
+func (f *ForbiddenTextPattern) UnmarshalYAML(node *yaml.Node) error {
+	// Support simple string syntax: "TODO"
+	if node.Kind == yaml.ScalarNode {
+		f.Pattern = node.Value
+		f.Regex = false
+		return nil
+	}
+
+	// Object syntax: { pattern: "...", regex: true }
+	type forbiddenTextPatternAlias ForbiddenTextPattern
+	alias := (*forbiddenTextPatternAlias)(f)
+	return node.Decode(alias)
+}
+
+// ImageRule defines validation for images within a section
+type ImageRule struct {
+	Min        int      `yaml:"min,omitempty"`
+	Max        int      `yaml:"max,omitempty"`
+	RequireAlt bool     `yaml:"require_alt,omitempty"`
+	Formats    []string `yaml:"formats,omitempty"`
+}
+
+// TableRule defines validation for tables within a section
+type TableRule struct {
+	Min             int      `yaml:"min,omitempty"`
+	Max             int      `yaml:"max,omitempty"`
+	MinColumns      int      `yaml:"min_columns,omitempty"`
+	RequiredHeaders []string `yaml:"required_headers,omitempty"`
+}
+
+// ListRule defines validation for lists within a section
+type ListRule struct {
+	Min      int    `yaml:"min,omitempty"`
+	Max      int    `yaml:"max,omitempty"`
+	Type     string `yaml:"type,omitempty"` // "ordered", "unordered", or empty for any
+	MinItems int    `yaml:"min_items,omitempty"`
+}
+
+// WordCountRule defines word count constraints for a section
+type WordCountRule struct {
+	Min int `yaml:"min,omitempty"`
+	Max int `yaml:"max,omitempty"`
 }

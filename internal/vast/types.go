@@ -66,6 +66,14 @@ func (n *Node) Images() []*parser.Image {
 	return nil
 }
 
+// Lists returns the lists if bound, empty slice otherwise.
+func (n *Node) Lists() []*parser.List {
+	if n.Section != nil {
+		return n.Section.Lists
+	}
+	return nil
+}
+
 // Location returns line/column for error reporting.
 func (n *Node) Location() (line, column int) {
 	if n.Section != nil && n.Section.Heading != nil {
