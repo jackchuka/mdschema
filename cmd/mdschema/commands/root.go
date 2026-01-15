@@ -35,6 +35,8 @@ func NewRootCmd() *cobra.Command {
 		Short: "A declarative schema-based Markdown documentation validator",
 		Long: `mdschema validates Markdown documentation structure and conventions
 using declarative schemas to maintain consistent documentation across projects.`,
+		SilenceUsage:  true,
+		SilenceErrors: true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			ctx := context.WithValue(cmd.Context(), configKey{}, cfg)
 			cmd.SetContext(ctx)
@@ -60,7 +62,7 @@ func Execute() {
 	if err := NewRootCmd().Execute(); err != nil {
 		// Don't print ErrViolationsFound - violations already reported
 		if !errors.Is(err, ErrViolationsFound) {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(os.Stderr, "Unexpected error:", err)
 		}
 		os.Exit(1)
 	}
