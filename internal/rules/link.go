@@ -19,7 +19,7 @@ import (
 type LinkValidationRule struct {
 }
 
-var _ ContextualRule = (*LinkValidationRule)(nil)
+var _ Rule = (*LinkValidationRule)(nil)
 
 // NewLinkValidationRule creates a new link validation rule
 func NewLinkValidationRule() *LinkValidationRule {
@@ -237,10 +237,4 @@ func (r *LinkValidationRule) validateFileLink(link *parser.Link, docDir string) 
 	}
 
 	return violations
-}
-
-// GenerateContent generates placeholder content (links don't generate content)
-func (r *LinkValidationRule) GenerateContent(builder *strings.Builder, element schema.StructureElement) bool {
-	// Link validation rule doesn't generate content
-	return false
 }

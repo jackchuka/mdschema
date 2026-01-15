@@ -13,7 +13,7 @@ import (
 type RequiredTextRule struct {
 }
 
-var _ ContextualRule = (*RequiredTextRule)(nil)
+var _ StructuralRule = (*RequiredTextRule)(nil)
 
 // NewRequiredTextRule creates a new section content rule
 func NewRequiredTextRule() *RequiredTextRule {

@@ -13,7 +13,8 @@ import (
 type FrontmatterRule struct {
 }
 
-var _ ContextualRule = (*FrontmatterRule)(nil)
+var _ Rule = (*FrontmatterRule)(nil)
+var _ FrontmatterGenerator = (*FrontmatterRule)(nil)
 
 // NewFrontmatterRule creates a new frontmatter rule
 func NewFrontmatterRule() *FrontmatterRule {
@@ -207,8 +208,52 @@ func isValidURL(s string) bool {
 	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
 }
 
-// GenerateContent generates placeholder frontmatter
-func (r *FrontmatterRule) GenerateContent(builder *strings.Builder, element schema.StructureElement) bool {
-	// Frontmatter is document-level, not per-element
-	return false
+// Generate generates YAML frontmatter based on schema configuration
+func (r *FrontmatterRule) Generate(builder *strings.Builder, s *schema.Schema) bool {
+	if s.Frontmatter == nil || len(s.Frontmatter.Fields) == 0 {
+		return false
+	}
+
+	builder.WriteString("---\n")
+
+	for _, field := range s.Frontmatter.Fields {
+		placeholder := r.getPlaceholder(field)
+		if field.Required {
+			builder.WriteString(field.Name + ": " + placeholder + " # required\n")
+		} else {
+			builder.WriteString(field.Name + ": " + placeholder + "\n")
+		}
+	}
+
+	builder.WriteString("---\n\n")
+	return true
+}
+
+// getPlaceholder returns an appropriate placeholder value based on field type/format
+func (r *FrontmatterRule) getPlaceholder(field schema.FrontmatterField) string {
+	// Check format first as it's more specific
+	switch field.Format {
+	case schema.FieldFormatDate:
+		return "2024-01-01"
+	case schema.FieldFormatEmail:
+		return "user@example.com"
+	case schema.FieldFormatURL:
+		return "https://example.com"
+	}
+
+	// Fall back to type
+	switch field.Type {
+	case schema.FieldTypeString:
+		return "\"TODO\""
+	case schema.FieldTypeNumber:
+		return "0"
+	case schema.FieldTypeBoolean:
+		return "false"
+	case schema.FieldTypeArray:
+		return "[\"item1\", \"item2\"]"
+	case schema.FieldTypeDate:
+		return "2024-01-01"
+	default:
+		return "\"TODO\""
+	}
 }

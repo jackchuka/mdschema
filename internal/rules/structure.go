@@ -12,7 +12,7 @@ import (
 type StructureRule struct {
 }
 
-var _ ContextualRule = (*StructureRule)(nil)
+var _ StructuralRule = (*StructureRule)(nil)
 
 // NewStructureRule creates a new simplified structure rule
 func NewStructureRule() *StructureRule {

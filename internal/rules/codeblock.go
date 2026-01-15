@@ -12,7 +12,7 @@ import (
 type CodeBlockRule struct {
 }
 
-var _ ContextualRule = (*CodeBlockRule)(nil)
+var _ StructuralRule = (*CodeBlockRule)(nil)
 
 // NewCodeBlockRule creates a new simplified code block rule
 func NewCodeBlockRule() *CodeBlockRule {

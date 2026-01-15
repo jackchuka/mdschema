@@ -13,7 +13,7 @@ import (
 type WordCountRule struct {
 }
 
-var _ ContextualRule = (*WordCountRule)(nil)
+var _ StructuralRule = (*WordCountRule)(nil)
 
 // NewWordCountRule creates a new word count rule
 func NewWordCountRule() *WordCountRule {

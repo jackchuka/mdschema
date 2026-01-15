@@ -13,7 +13,7 @@ import (
 type ForbiddenTextRule struct {
 }
 
-var _ ContextualRule = (*ForbiddenTextRule)(nil)
+var _ StructuralRule = (*ForbiddenTextRule)(nil)
 
 // NewForbiddenTextRule creates a new forbidden text rule
 func NewForbiddenTextRule() *ForbiddenTextRule {

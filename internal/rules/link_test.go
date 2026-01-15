@@ -373,25 +373,6 @@ func TestLinkValidationFileLinkWithAnchor(t *testing.T) {
 	}
 }
 
-func TestLinkValidationGenerateContent(t *testing.T) {
-	rule := NewLinkValidationRule()
-	var builder strings.Builder
-
-	element := schema.StructureElement{
-		Heading: schema.HeadingPattern{Pattern: "## Section"},
-	}
-
-	result := rule.GenerateContent(&builder, element)
-
-	if result {
-		t.Error("GenerateContent() should return false for link rule")
-	}
-
-	if builder.Len() != 0 {
-		t.Error("GenerateContent() should not write any content")
-	}
-}
-
 func TestLinkValidationInternalDisabled(t *testing.T) {
 	p := parser.New()
 	doc, err := p.Parse("test.md", []byte("# Title\n\n[link](#nonexistent)\n"))

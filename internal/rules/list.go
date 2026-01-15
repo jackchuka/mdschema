@@ -12,7 +12,7 @@ import (
 type ListRule struct {
 }
 
-var _ ContextualRule = (*ListRule)(nil)
+var _ StructuralRule = (*ListRule)(nil)
 
 // NewListRule creates a new list rule
 func NewListRule() *ListRule {

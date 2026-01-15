@@ -13,7 +13,7 @@ import (
 type ImageRule struct {
 }
 
-var _ ContextualRule = (*ImageRule)(nil)
+var _ StructuralRule = (*ImageRule)(nil)
 
 // NewImageRule creates a new image rule
 func NewImageRule() *ImageRule {

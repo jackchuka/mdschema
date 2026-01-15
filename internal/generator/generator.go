@@ -23,7 +23,8 @@ func New() *Generator {
 func (g *Generator) Generate(s *schema.Schema) string {
 	var builder strings.Builder
 
-	builder.WriteString("<!-- Generated from schema -->\n\n")
+	// Generate frontmatter if applicable
+	g.ruleGenerator.GenerateFrontmatter(&builder, s)
 
 	for _, element := range s.Structure {
 		g.generateElement(&builder, element, 1)

@@ -312,18 +312,41 @@ func TestFrontmatterRuleOptionalField(t *testing.T) {
 	}
 }
 
-func TestFrontmatterRuleGenerateContent(t *testing.T) {
+func TestFrontmatterRuleGenerateDocumentPreamble(t *testing.T) {
 	rule := NewFrontmatterRule()
 	var builder strings.Builder
 
-	element := schema.StructureElement{
-		Heading: schema.HeadingPattern{Pattern: "## Section"},
+	// Test with no frontmatter config
+	s := &schema.Schema{}
+	result := rule.Generate(&builder, s)
+	if result {
+		t.Error("GenerateDocumentPreamble() should return false when no frontmatter config")
 	}
 
-	result := rule.GenerateContent(&builder, element)
+	// Test with frontmatter config
+	builder.Reset()
+	s = &schema.Schema{
+		Frontmatter: &schema.FrontmatterConfig{
+			Fields: []schema.FrontmatterField{
+				{Name: "title", Required: true, Type: schema.FieldTypeString},
+				{Name: "date", Type: schema.FieldTypeDate},
+			},
+		},
+	}
+	result = rule.Generate(&builder, s)
+	if !result {
+		t.Error("GenerateDocumentPreamble() should return true when frontmatter config exists")
+	}
 
-	if result {
-		t.Error("GenerateContent() should return false for frontmatter rules (document-level)")
+	output := builder.String()
+	if !strings.Contains(output, "---") {
+		t.Error("Output should contain frontmatter delimiters")
+	}
+	if !strings.Contains(output, "title:") {
+		t.Error("Output should contain title field")
+	}
+	if !strings.Contains(output, "# required") {
+		t.Error("Output should mark required fields")
 	}
 }
 

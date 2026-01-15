@@ -310,18 +310,3 @@ func TestHeadingRuleCombinedRules(t *testing.T) {
 		t.Errorf("Should detect multiple violations, got %d: %v", len(violations), violations)
 	}
 }
-
-func TestHeadingRuleGenerateContent(t *testing.T) {
-	rule := NewHeadingRule()
-	var builder strings.Builder
-
-	element := schema.StructureElement{
-		Heading: schema.HeadingPattern{Pattern: "## Section"},
-	}
-
-	result := rule.GenerateContent(&builder, element)
-
-	if result {
-		t.Error("GenerateContent() should return false for heading rules")
-	}
-}

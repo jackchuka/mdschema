@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/jackchuka/mdschema/internal/parser"
-	"github.com/jackchuka/mdschema/internal/schema"
 	"github.com/jackchuka/mdschema/internal/vast"
 )
 
@@ -13,7 +12,7 @@ import (
 type HeadingRule struct {
 }
 
-var _ ContextualRule = (*HeadingRule)(nil)
+var _ Rule = (*HeadingRule)(nil)
 
 // NewHeadingRule creates a new heading rule
 func NewHeadingRule() *HeadingRule {
@@ -173,9 +172,4 @@ func (r *HeadingRule) validateMaxDepth(headings []*parser.Heading, maxDepth int)
 	}
 
 	return violations
-}
-
-// GenerateContent does not generate content for heading rules
-func (r *HeadingRule) GenerateContent(builder *strings.Builder, element schema.StructureElement) bool {
-	return false
 }

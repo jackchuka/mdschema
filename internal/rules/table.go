@@ -12,7 +12,7 @@ import (
 type TableRule struct {
 }
 
-var _ ContextualRule = (*TableRule)(nil)
+var _ StructuralRule = (*TableRule)(nil)
 
 // NewTableRule creates a new table rule
 func NewTableRule() *TableRule {
