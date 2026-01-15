@@ -11,6 +11,9 @@ type Schema struct {
 
 	// Global link validation rules
 	Links *LinkRule `yaml:"links,omitempty"`
+
+	// Global heading validation rules
+	HeadingRules *HeadingRules `yaml:"heading_rules,omitempty"`
 }
 
 // LinkRule defines validation rules for links in the document
@@ -194,4 +197,19 @@ type ListRule struct {
 type WordCountRule struct {
 	Min int `yaml:"min,omitempty"`
 	Max int `yaml:"max,omitempty"`
+}
+
+// HeadingRules defines global validation rules for document headings
+type HeadingRules struct {
+	// NoSkipLevels ensures heading levels are not skipped (e.g., h1 -> h3 without h2)
+	NoSkipLevels bool `yaml:"no_skip_levels,omitempty"`
+
+	// Unique ensures all headings in the document are unique
+	Unique bool `yaml:"unique,omitempty"`
+
+	// UniquePerLevel ensures headings are unique within the same level
+	UniquePerLevel bool `yaml:"unique_per_level,omitempty"`
+
+	// MaxDepth limits the maximum heading depth (1-6, where 1 is h1)
+	MaxDepth int `yaml:"max_depth,omitempty"`
 }

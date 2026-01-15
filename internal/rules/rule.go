@@ -37,6 +37,7 @@ func defaultRules() []ContextualRule {
 		NewTableRule(),
 		NewListRule(),
 		NewWordCountRule(),
+		NewHeadingRule(),
 		NewLinkValidationRule(),
 	}
 }
