@@ -37,9 +37,9 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 		if requirement.Type == "" {
 			// Any list type matches
 			matchingLists++
-		} else if requirement.Type == "ordered" && list.IsOrdered {
+		} else if requirement.Type == schema.ListTypeOrdered && list.IsOrdered {
 			matchingLists++
-		} else if requirement.Type == "unordered" && !list.IsOrdered {
+		} else if requirement.Type == schema.ListTypeUnordered && !list.IsOrdered {
 			matchingLists++
 		}
 	}
@@ -131,7 +131,7 @@ func (r *ListRule) GenerateContent(builder *strings.Builder, element schema.Stru
 	for _, rule := range element.Lists {
 		if rule.Min > 0 {
 			for i := 0; i < rule.Min; i++ {
-				isOrdered := rule.Type == "ordered"
+				isOrdered := rule.Type == schema.ListTypeOrdered
 				itemCount := 3
 				if rule.MinItems > 0 {
 					itemCount = rule.MinItems

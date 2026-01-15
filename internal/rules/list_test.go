@@ -122,7 +122,7 @@ func TestListRuleTypeOrdered(t *testing.T) {
 				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					Lists: []schema.ListRule{
-						{Min: 1, Type: "ordered"},
+						{Min: 1, Type: schema.ListTypeOrdered},
 					},
 				},
 			},
@@ -164,7 +164,7 @@ func TestListRuleTypeUnordered(t *testing.T) {
 				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					Lists: []schema.ListRule{
-						{Min: 1, Type: "unordered"},
+						{Min: 1, Type: schema.ListTypeUnordered},
 					},
 				},
 			},
@@ -194,7 +194,7 @@ func TestListRuleSufficient(t *testing.T) {
 				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					Lists: []schema.ListRule{
-						{Min: 1, Type: "ordered"},
+						{Min: 1, Type: schema.ListTypeOrdered},
 					},
 				},
 			},
@@ -218,7 +218,7 @@ func TestListRuleGenerateContent(t *testing.T) {
 		Heading: schema.HeadingPattern{Pattern: "## List Section"},
 		SectionRules: &schema.SectionRules{
 			Lists: []schema.ListRule{
-				{Min: 1, Type: "ordered"},
+				{Min: 1, Type: schema.ListTypeOrdered},
 			},
 		},
 	}
@@ -243,7 +243,7 @@ func TestListRuleGenerateContentUnordered(t *testing.T) {
 		Heading: schema.HeadingPattern{Pattern: "## List Section"},
 		SectionRules: &schema.SectionRules{
 			Lists: []schema.ListRule{
-				{Min: 1, Type: "unordered"},
+				{Min: 1, Type: schema.ListTypeUnordered},
 			},
 		},
 	}

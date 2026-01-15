@@ -188,12 +188,21 @@ type TableRule struct {
 	RequiredHeaders []string `yaml:"required_headers,omitempty"`
 }
 
+// ListType represents the type of a list
+type ListType string
+
+// List type constants
+const (
+	ListTypeOrdered   ListType = "ordered"
+	ListTypeUnordered ListType = "unordered"
+)
+
 // ListRule defines validation for lists within a section
 type ListRule struct {
-	Min      int    `yaml:"min,omitempty"`
-	Max      int    `yaml:"max,omitempty"`
-	Type     string `yaml:"type,omitempty"` // "ordered", "unordered", or empty for any
-	MinItems int    `yaml:"min_items,omitempty"`
+	Min      int      `yaml:"min,omitempty"`
+	Max      int      `yaml:"max,omitempty"`
+	Type     ListType `yaml:"type,omitempty"` // ordered, unordered, or empty for any
+	MinItems int      `yaml:"min_items,omitempty"`
 }
 
 // WordCountRule defines word count constraints for a section
@@ -226,6 +235,28 @@ type FrontmatterConfig struct {
 	Fields []FrontmatterField `yaml:"fields,omitempty"`
 }
 
+// FieldType represents the type of a frontmatter field
+type FieldType string
+
+// Field type constants for frontmatter validation
+const (
+	FieldTypeString  FieldType = "string"
+	FieldTypeNumber  FieldType = "number"
+	FieldTypeBoolean FieldType = "boolean"
+	FieldTypeArray   FieldType = "array"
+	FieldTypeDate    FieldType = "date"
+)
+
+// FieldFormat represents the format of a frontmatter field
+type FieldFormat string
+
+// Field format constants for frontmatter validation
+const (
+	FieldFormatDate  FieldFormat = "date"  // YYYY-MM-DD
+	FieldFormatEmail FieldFormat = "email" // valid email address
+	FieldFormatURL   FieldFormat = "url"   // http:// or https://
+)
+
 // FrontmatterField defines a single frontmatter field requirement
 type FrontmatterField struct {
 	// Name is the field name (required)
@@ -234,9 +265,9 @@ type FrontmatterField struct {
 	// Required indicates whether this field must be present
 	Required bool `yaml:"required,omitempty"`
 
-	// Type is the expected type: "string", "number", "boolean", "array", "date"
-	Type string `yaml:"type,omitempty"`
+	// Type is the expected type (use FieldType* constants)
+	Type FieldType `yaml:"type,omitempty"`
 
-	// Format specifies format validation (e.g., "date" for YYYY-MM-DD)
-	Format string `yaml:"format,omitempty"`
+	// Format specifies format validation (use FieldFormat* constants)
+	Format FieldFormat `yaml:"format,omitempty"`
 }

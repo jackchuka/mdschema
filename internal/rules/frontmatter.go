@@ -111,28 +111,28 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 }
 
 // validateFieldType checks if a field value matches the expected type
-func (r *FrontmatterRule) validateFieldType(name string, value any, expectedType string) string {
+func (r *FrontmatterRule) validateFieldType(name string, value any, expectedType schema.FieldType) string {
 	switch expectedType {
-	case "string":
+	case schema.FieldTypeString:
 		if _, ok := value.(string); !ok {
 			return fmt.Sprintf("Frontmatter field '%s' should be a string", name)
 		}
-	case "number":
+	case schema.FieldTypeNumber:
 		switch value.(type) {
 		case int, int64, float64:
 			// OK
 		default:
 			return fmt.Sprintf("Frontmatter field '%s' should be a number", name)
 		}
-	case "boolean":
+	case schema.FieldTypeBoolean:
 		if _, ok := value.(bool); !ok {
 			return fmt.Sprintf("Frontmatter field '%s' should be a boolean", name)
 		}
-	case "array":
+	case schema.FieldTypeArray:
 		if _, ok := value.([]any); !ok {
 			return fmt.Sprintf("Frontmatter field '%s' should be an array", name)
 		}
-	case "date":
+	case schema.FieldTypeDate:
 		// Date can be string or time.Time depending on YAML parsing
 		// YAML may parse dates like 2024-01-15 as time.Time
 		if err := r.validateDateValue(value); err != "" {
@@ -161,9 +161,9 @@ func (r *FrontmatterRule) validateDateValue(value any) string {
 }
 
 // validateFieldFormat checks if a field value matches the expected format
-func (r *FrontmatterRule) validateFieldFormat(name string, value any, format string) string {
+func (r *FrontmatterRule) validateFieldFormat(name string, value any, format schema.FieldFormat) string {
 	switch format {
-	case "date":
+	case schema.FieldFormatDate:
 		// Date format can be validated on string or time.Time
 		if err := r.validateDateValue(value); err != "" {
 			return fmt.Sprintf("Frontmatter field '%s' %s", name, err)
@@ -178,11 +178,11 @@ func (r *FrontmatterRule) validateFieldFormat(name string, value any, format str
 	}
 
 	switch format {
-	case "email":
+	case schema.FieldFormatEmail:
 		if !isValidEmail(str) {
 			return fmt.Sprintf("Frontmatter field '%s' should be a valid email address", name)
 		}
-	case "url":
+	case schema.FieldFormatURL:
 		if !isValidURL(str) {
 			return fmt.Sprintf("Frontmatter field '%s' should be a valid URL", name)
 		}

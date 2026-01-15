@@ -175,7 +175,7 @@ func TestFrontmatterRuleTypeValidation(t *testing.T) {
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "count", Type: "number"},
+				{Name: "count", Type: schema.FieldTypeNumber},
 			},
 		},
 	}
@@ -212,7 +212,7 @@ func TestFrontmatterRuleDateFormat(t *testing.T) {
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "date", Format: "date"},
+				{Name: "date", Format: schema.FieldFormatDate},
 			},
 		},
 	}
@@ -248,7 +248,7 @@ func TestFrontmatterRuleValidDateFormat(t *testing.T) {
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "date", Format: "date"},
+				{Name: "date", Format: schema.FieldFormatDate},
 			},
 		},
 	}
@@ -272,7 +272,7 @@ func TestFrontmatterRuleArrayType(t *testing.T) {
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "tags", Type: "array"},
+				{Name: "tags", Type: schema.FieldTypeArray},
 			},
 		},
 	}
