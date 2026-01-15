@@ -32,7 +32,12 @@ func TestStructureRuleValidMappings(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+			{
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Section"}},
+				},
+			},
 		},
 	}
 
@@ -139,7 +144,7 @@ func TestStructureRuleWrongOrder(t *testing.T) {
 	}
 
 	if !found {
-		t.Log("Warning: ordering violation not detected (may be implementation-specific)")
+		t.Error("Expected violation for wrong ordering of sections")
 	}
 }
 
@@ -168,5 +173,165 @@ func TestStructureRuleGenerateContent(t *testing.T) {
 	}
 	if !strings.Contains(content, "Child1") {
 		t.Error("Should mention child elements")
+	}
+}
+
+func TestStructureRuleUnmatchedHeading(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Extra\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) == 0 {
+		t.Fatal("Expected violations for unmatched heading")
+	}
+
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Unexpected section") && strings.Contains(v.Message, "Extra") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("Expected unmatched heading violation for 'Extra', got: %+v", violations)
+	}
+}
+
+func TestStructureRuleRegexMatchesLicenseHeading(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# TEST\n\n## Overview\n\n# License\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
+					Regex:   true,
+				},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+			{
+				Heading:  schema.HeadingPattern{Pattern: "# License"},
+				Optional: true,
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	matches := ctx.Tree.GetByElement("# [A-Za-z0-9][A-Za-z0-9 _-]*")
+	if len(matches) != 1 {
+		t.Fatalf("Expected regex heading to match 1 root, got %d", len(matches))
+	}
+	if matches[0].HeadingText() != "TEST" {
+		t.Fatalf("Unexpected regex match: %q", matches[0].HeadingText())
+	}
+
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) != 0 {
+		t.Fatalf("Expected no violations, got: %+v", violations)
+	}
+}
+
+func TestStructureRuleRootFirstMismatch(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# 1.test\n\n# TEST\n\n## Overview\n\n# License\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
+					Regex:   true,
+				},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+			{
+				Heading:  schema.HeadingPattern{Pattern: "# License"},
+				Optional: true,
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) == 0 {
+		t.Fatal("Expected root-first violation, got none")
+	}
+
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "First heading") && strings.Contains(v.Message, "1.test") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("Expected root-first violation mentioning '1.test', got: %+v", violations)
+	}
+}
+
+func TestStructureRuleOrderMatchingSkipsEarlierHeadings(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# a\n\n# 1.test\n\n# TEST\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Pattern: "# 1.test"}},
+			{
+				Heading: schema.HeadingPattern{
+					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
+					Regex:   true,
+				},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) == 0 {
+		t.Fatal("Expected violations for missing Overview")
+	}
+
+	foundOverview := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Overview") {
+			foundOverview = true
+			if strings.Contains(v.Message, "a") {
+				t.Fatalf("Expected missing Overview under TEST, got: %+v", v)
+			}
+		}
+	}
+	if !foundOverview {
+		t.Fatalf("Expected missing Overview violation, got: %+v", violations)
 	}
 }

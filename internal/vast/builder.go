@@ -30,26 +30,19 @@ func (b *Builder) Build(doc *parser.Document, s *schema.Schema) *Tree {
 	boundSections := make(map[*parser.Section]bool)
 
 	// Build nodes for each top-level schema element
+	lastMatchedLine := 0
 	for i, element := range s.Structure {
-		// Find all matching sections at root level (skip already-bound sections)
-		matches := b.findMatches(doc.Root.Children, element, boundSections)
+		// Find the first matching section at root level after the last match
+		match := b.findFirstMatchAfter(doc.Root.Children, element, boundSections, lastMatchedLine)
 
-		// Create a node for EACH match (not just the first!)
-		matchCount := 0
-		for _, section := range matches {
-			// Double-check that section wasn't bound by a previous match in this loop
-			if boundSections[section] {
-				continue
-			}
-			node := b.buildNode(element, section, nil, i, boundSections)
+		if match != nil {
+			node := b.buildNode(element, match, nil, i, boundSections)
 			tree.Roots = append(tree.Roots, node)
 			tree.AllNodes = append(tree.AllNodes, node)
 			b.collectAllNodes(node, &tree.AllNodes)
-			matchCount++
-		}
-
-		// If no matches and element is required, create an unbound node
-		if matchCount == 0 {
+			lastMatchedLine = match.StartLine
+		} else {
+			// If no match, create an unbound node
 			node := &Node{
 				Element: element,
 				Section: nil,
@@ -86,19 +79,19 @@ func (b *Builder) buildNode(element schema.StructureElement, section *parser.Sec
 		node.ActualOrder = section.StartLine
 	}
 
-	// Build children for THIS specific section (not just the first match!)
+	// Build children for THIS specific section (first match only)
 	if section != nil && len(element.Children) > 0 {
+		lastMatchedLine := 0
 		for i, childElement := range element.Children {
-			// Find matches among THIS section's children (skip already-bound)
-			childMatches := b.findMatches(section.Children, childElement, boundSections)
+			// Find the first match among THIS section's children after the last match
+			childMatch := b.findFirstMatchAfter(section.Children, childElement, boundSections, lastMatchedLine)
 
-			for _, childSection := range childMatches {
-				childNode := b.buildNode(childElement, childSection, node, i, boundSections)
+			if childMatch != nil {
+				childNode := b.buildNode(childElement, childMatch, node, i, boundSections)
 				node.Children = append(node.Children, childNode)
-			}
-
-			// If no matches and child element exists in schema, create unbound node
-			if len(childMatches) == 0 {
+				lastMatchedLine = childMatch.StartLine
+			} else {
+				// If no match, create an unbound node
 				childNode := &Node{
 					Element:  childElement,
 					Section:  nil,
@@ -134,21 +127,22 @@ func (b *Builder) buildUnboundChildren(parent *Node, children []schema.Structure
 	}
 }
 
-// findMatches finds all sections matching a schema element, skipping already-bound sections.
-func (b *Builder) findMatches(sections []*parser.Section, element schema.StructureElement, boundSections map[*parser.Section]bool) []*parser.Section {
-	matches := make([]*parser.Section, 0)
-
+// findFirstMatchAfter finds the first matching section after minLine, skipping already-bound sections.
+func (b *Builder) findFirstMatchAfter(sections []*parser.Section, element schema.StructureElement, boundSections map[*parser.Section]bool, minLine int) *parser.Section {
 	for _, section := range sections {
 		// Skip already-bound sections to avoid double-matching
 		if boundSections[section] {
 			continue
 		}
+		if section.StartLine <= minLine {
+			continue
+		}
 		if section.Heading != nil && b.matcher.MatchesHeadingPattern(section.Heading, element.Heading.Pattern, element.Heading.Regex) {
-			matches = append(matches, section)
+			return section
 		}
 	}
 
-	return matches
+	return nil
 }
 
 // collectAllNodes recursively collects all nodes from a node's children.

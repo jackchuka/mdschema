@@ -4,3 +4,12 @@ links:
   validate_files: true
   blocked_domains:
     - blocked-domain.com
+
+structure:
+  - heading: "# Test Document"
+    optional: true
+    children:
+      - heading: "## Introduction"
+        optional: true
+      - heading: "## Getting Started"
+        optional: true

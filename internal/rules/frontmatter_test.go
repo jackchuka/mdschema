@@ -49,10 +49,10 @@ func TestFrontmatterRuleRequiredMissing(t *testing.T) {
 		t.Fatalf("Parse() error: %v", err)
 	}
 
-	// Frontmatter required but missing
+	// Frontmatter required but missing (Optional: false is the default)
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
-			Required: true,
+			// Optional: false is default, meaning frontmatter is required
 		},
 	}
 
@@ -84,10 +84,10 @@ func TestFrontmatterRuleRequiredPresent(t *testing.T) {
 		t.Fatalf("Parse() error: %v", err)
 	}
 
-	// Frontmatter required and present
+	// Frontmatter required and present (Optional: false is the default)
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
-			Required: true,
+			// Optional: false is default, meaning frontmatter is required
 		},
 	}
 
@@ -107,12 +107,12 @@ func TestFrontmatterRuleRequiredFieldMissing(t *testing.T) {
 		t.Fatalf("Parse() error: %v", err)
 	}
 
-	// Required field "date" is missing
+	// Required field "date" is missing (fields are required by default)
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "title", Required: true},
-				{Name: "date", Required: true},
+				{Name: "title"}, // required by default
+				{Name: "date"},  // required by default
 			},
 		},
 	}
@@ -145,12 +145,12 @@ func TestFrontmatterRuleAllFieldsPresent(t *testing.T) {
 		t.Fatalf("Parse() error: %v", err)
 	}
 
-	// All required fields present
+	// All required fields present (fields are required by default)
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "title", Required: true},
-				{Name: "date", Required: true},
+				{Name: "title"}, // required by default
+				{Name: "date"},  // required by default
 			},
 		},
 	}
@@ -297,8 +297,8 @@ func TestFrontmatterRuleOptionalField(t *testing.T) {
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "title", Required: true},
-				{Name: "author", Required: false},
+				{Name: "title"},                  // required by default
+				{Name: "author", Optional: true}, // explicitly optional
 			},
 		},
 	}
@@ -328,8 +328,8 @@ func TestFrontmatterRuleGenerateDocumentPreamble(t *testing.T) {
 	s = &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
 			Fields: []schema.FrontmatterField{
-				{Name: "title", Required: true, Type: schema.FieldTypeString},
-				{Name: "date", Type: schema.FieldTypeDate},
+				{Name: "title", Type: schema.FieldTypeString}, // required by default
+				{Name: "date", Type: schema.FieldTypeDate},    // required by default
 			},
 		},
 	}

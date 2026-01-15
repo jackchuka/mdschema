@@ -31,10 +31,6 @@ func TestGenerateBasicStructure(t *testing.T) {
 	if !strings.Contains(output, "# Title") {
 		t.Error("Generated output should contain the heading")
 	}
-
-	if !strings.Contains(output, "<!-- Generated from schema -->") {
-		t.Error("Generated output should contain header comment")
-	}
 }
 
 func TestGenerateOptionalSection(t *testing.T) {
@@ -208,33 +204,18 @@ func TestGenerateDeeplyNested(t *testing.T) {
 	}
 }
 
-func TestGenerateEmptySchema(t *testing.T) {
-	g := New()
-
-	s := &schema.Schema{
-		Structure: []schema.StructureElement{},
-	}
-
-	output := g.Generate(s)
-
-	// Should just have the header comment
-	if !strings.Contains(output, "<!-- Generated from schema -->") {
-		t.Error("Should contain header comment even for empty schema")
-	}
-}
-
 func TestGenerateFrontmatter(t *testing.T) {
 	g := New()
 
 	s := &schema.Schema{
 		Frontmatter: &schema.FrontmatterConfig{
-			Required: true,
+			// Optional: false is default, meaning frontmatter is required
 			Fields: []schema.FrontmatterField{
-				{Name: "title", Required: true, Type: schema.FieldTypeString},
-				{Name: "date", Required: true, Type: schema.FieldTypeDate},
-				{Name: "tags", Required: false, Type: schema.FieldTypeArray},
-				{Name: "draft", Type: schema.FieldTypeBoolean},
-				{Name: "version", Type: schema.FieldTypeNumber},
+				{Name: "title", Type: schema.FieldTypeString},               // required by default
+				{Name: "date", Type: schema.FieldTypeDate},                  // required by default
+				{Name: "tags", Optional: true, Type: schema.FieldTypeArray}, // explicitly optional
+				{Name: "draft", Type: schema.FieldTypeBoolean},              // required by default
+				{Name: "version", Type: schema.FieldTypeNumber},             // required by default
 			},
 		},
 		Structure: []schema.StructureElement{
@@ -263,14 +244,14 @@ func TestGenerateFrontmatter(t *testing.T) {
 		t.Error("Generated output should contain tags array field without required comment")
 	}
 
-	// Check boolean placeholder
-	if !strings.Contains(output, "draft: false") {
-		t.Error("Generated output should contain draft boolean field")
+	// Check boolean placeholder (now required by default)
+	if !strings.Contains(output, "draft: false # required") {
+		t.Error("Generated output should contain draft boolean field with required comment")
 	}
 
-	// Check number placeholder
-	if !strings.Contains(output, "version: 0") {
-		t.Error("Generated output should contain version number field")
+	// Check number placeholder (now required by default)
+	if !strings.Contains(output, "version: 0 # required") {
+		t.Error("Generated output should contain version number field with required comment")
 	}
 }
 

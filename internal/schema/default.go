@@ -17,16 +17,16 @@ func buildDefaultSchema() *Schema {
 	return &Schema{
 		// Global frontmatter validation
 		Frontmatter: &FrontmatterConfig{
-			Required: true,
+			// Optional: false is the default, meaning frontmatter is required
 			Fields: []FrontmatterField{
-				{Name: "title", Required: true, Type: FieldTypeString},
-				{Name: "description", Required: false, Type: FieldTypeString},
-				{Name: "author", Required: false, Type: FieldTypeString, Format: FieldFormatEmail},
-				{Name: "date", Required: true, Type: FieldTypeDate, Format: FieldFormatDate},
-				{Name: "tags", Required: false, Type: FieldTypeArray},
-				{Name: "draft", Required: false, Type: FieldTypeBoolean},
-				{Name: "version", Required: false, Type: FieldTypeNumber},
-				{Name: "repository", Required: false, Type: FieldTypeString, Format: FieldFormatURL},
+				{Name: "title", Type: FieldTypeString},                       // required by default
+				{Name: "description", Optional: true, Type: FieldTypeString}, // explicitly optional
+				{Name: "author", Optional: true, Type: FieldTypeString, Format: FieldFormatEmail},
+				{Name: "date", Type: FieldTypeDate, Format: FieldFormatDate}, // required by default
+				{Name: "tags", Optional: true, Type: FieldTypeArray},
+				{Name: "draft", Optional: true, Type: FieldTypeBoolean},
+				{Name: "version", Optional: true, Type: FieldTypeNumber},
+				{Name: "repository", Optional: true, Type: FieldTypeString, Format: FieldFormatURL},
 			},
 		},
 

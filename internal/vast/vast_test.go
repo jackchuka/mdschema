@@ -89,51 +89,62 @@ Linux install
 
 	root := ctx.Tree.Roots[0]
 
-	// Root should have 2 Installation children (both match the pattern)
+	// Root should have 1 Installation child (first match only)
 	installCount := 0
+	var installNode *Node
 	for _, child := range root.Children {
 		if child.Element.Heading.Pattern == "## Installation" {
 			installCount++
+			installNode = child
 		}
 	}
 
-	if installCount != 2 {
-		t.Errorf("Expected 2 Installation nodes, got %d", installCount)
+	if installCount != 1 {
+		t.Errorf("Expected 1 Installation node, got %d", installCount)
+	}
+	if installNode == nil {
+		t.Fatal("Expected Installation node to be present")
 	}
 
-	// Verify each Installation has its own children
-	firstInstall := root.Children[0]
-	secondInstall := root.Children[1]
-
-	// First installation should have Windows and macOS bound
+	// Installation should have Windows/macOS bound and Linux unbound
 	windowsBound := false
 	macosBound := false
-	for _, child := range firstInstall.Children {
-		if child.HeadingText() == "Windows" && child.IsBound {
-			windowsBound = true
-		}
-		if child.HeadingText() == "macOS" && child.IsBound {
-			macosBound = true
+	linuxFound := false
+	linuxBound := false
+	for _, child := range installNode.Children {
+		switch child.Element.Heading.Pattern {
+		case "### Windows":
+			windowsBound = child.IsBound
+		case "### macOS":
+			macosBound = child.IsBound
+		case "### Linux":
+			linuxFound = true
+			linuxBound = child.IsBound
 		}
 	}
 
 	if !windowsBound {
-		t.Error("First Installation should have Windows bound")
+		t.Error("Installation should have Windows bound")
 	}
 	if !macosBound {
-		t.Error("First Installation should have macOS bound")
+		t.Error("Installation should have macOS bound")
+	}
+	if !linuxFound {
+		t.Error("Installation should include Linux node")
+	}
+	if linuxBound {
+		t.Error("Installation should have Linux unbound")
 	}
 
-	// Second installation should have Linux bound
-	linuxBound := false
-	for _, child := range secondInstall.Children {
-		if child.HeadingText() == "Linux" && child.IsBound {
-			linuxBound = true
+	unmatchedInstallation := false
+	for _, section := range ctx.Tree.UnmatchedSections {
+		if section.Heading != nil && section.Heading.Text == "Installation" {
+			unmatchedInstallation = true
+			break
 		}
 	}
-
-	if !linuxBound {
-		t.Error("Second Installation should have Linux bound")
+	if !unmatchedInstallation {
+		t.Error("Expected second Installation section to be unmatched")
 	}
 }
 

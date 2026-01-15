@@ -228,8 +228,8 @@ type HeadingRules struct {
 
 // FrontmatterConfig defines validation rules for YAML frontmatter
 type FrontmatterConfig struct {
-	// Required indicates frontmatter must be present
-	Required bool `yaml:"required,omitempty" lc:"frontmatter block must exist"`
+	// Optional indicates frontmatter block is not required (default: false = required)
+	Optional bool `yaml:"optional,omitempty" lc:"frontmatter block is not required"`
 
 	// Fields defines the required/optional fields and their constraints
 	Fields []FrontmatterField `yaml:"fields,omitempty" lc:"field definitions"`
@@ -262,8 +262,8 @@ type FrontmatterField struct {
 	// Name is the field name (required)
 	Name string `yaml:"name" lc:"field name"`
 
-	// Required indicates whether this field must be present
-	Required bool `yaml:"required,omitempty" lc:"field must be present"`
+	// Optional indicates whether this field is not required (default: false = required)
+	Optional bool `yaml:"optional,omitempty" lc:"field is not required"`
 
 	// Type is the expected type (use FieldType* constants)
 	Type FieldType `yaml:"type,omitempty" lc:"string, number, boolean, array, date"`

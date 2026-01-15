@@ -213,12 +213,12 @@ structure:
 ```yaml
 # Global rules
 frontmatter:
-  required: true
+  # optional: false is default, meaning frontmatter is required
   fields:
-    - { name: "title", required: true }
-    - { name: "date", required: true, format: date }
-    - { name: "author", format: email }
-    - { name: "tags", type: array }
+    - { name: "title" } # required by default
+    - { name: "date", format: date } # required by default
+    - { name: "author", optional: true, format: email }
+    - { name: "tags", optional: true, type: array }
 
 heading_rules:
   no_skip_levels: true
@@ -296,15 +296,15 @@ heading_rules:
 
 ```yaml
 frontmatter:
-  required: true
+  optional: true # Set to make frontmatter optional (default: required)
   fields:
-    - { name: "title", required: true, type: string }
-    - { name: "date", required: true, type: date, format: date }
-    - { name: "author", required: false, format: email }
-    - { name: "tags", type: array }
-    - { name: "draft", type: boolean }
-    - { name: "version", type: number }
-    - { name: "repo", format: url }
+    - { name: "title", type: string } # required by default
+    - { name: "date", type: date, format: date } # required by default
+    - { name: "author", optional: true, format: email } # explicitly optional
+    - { name: "tags", optional: true, type: array }
+    - { name: "draft", optional: true, type: boolean }
+    - { name: "version", optional: true, type: number }
+    - { name: "repo", optional: true, format: url }
 ```
 
 **Field types:** `string`, `number`, `boolean`, `array`, `date`

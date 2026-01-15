@@ -39,7 +39,7 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	fm := ctx.Tree.Document.FrontMatter
 
 	// Check if frontmatter is required but missing
-	if config.Required && fm == nil {
+	if !config.Optional && fm == nil {
 		violations = append(violations, Violation{
 			Rule:    r.Name(),
 			Message: "Frontmatter is required but not found",
@@ -69,7 +69,7 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	for _, field := range config.Fields {
 		value, exists := fm.Data[field.Name]
 
-		if field.Required && !exists {
+		if !field.Optional && !exists {
 			violations = append(violations, Violation{
 				Rule:    r.Name(),
 				Message: fmt.Sprintf("Required frontmatter field '%s' is missing", field.Name),
@@ -218,7 +218,7 @@ func (r *FrontmatterRule) Generate(builder *strings.Builder, s *schema.Schema) b
 
 	for _, field := range s.Frontmatter.Fields {
 		placeholder := r.getPlaceholder(field)
-		if field.Required {
+		if !field.Optional {
 			builder.WriteString(field.Name + ": " + placeholder + " # required\n")
 		} else {
 			builder.WriteString(field.Name + ": " + placeholder + "\n")

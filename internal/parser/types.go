@@ -97,3 +97,23 @@ type FrontMatter struct {
 	Content string
 	Data    map[string]any
 }
+
+// LineLocatable is implemented by elements that have a line position
+type LineLocatable interface {
+	GetLine() int
+}
+
+// GetLine returns the line number of the code block
+func (c *CodeBlock) GetLine() int { return c.Line }
+
+// GetLine returns the line number of the link
+func (l *Link) GetLine() int { return l.Line }
+
+// GetLine returns the line number of the list
+func (l *List) GetLine() int { return l.Line }
+
+// GetLine returns the line number of the table
+func (t *Table) GetLine() int { return t.Line }
+
+// GetLine returns the line number of the image
+func (i *Image) GetLine() int { return i.Line }
