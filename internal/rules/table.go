@@ -36,34 +36,22 @@ func (r *TableRule) validateTableRequirement(n *vast.Node, requirement schema.Ta
 
 	// Check minimum requirement
 	if requirement.Min > 0 && count < requirement.Min {
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: fmt.Sprintf("Section '%s' requires at least %d tables, found %d", n.HeadingText(), requirement.Min, count),
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations,
+			NewViolation(r.Name(), fmt.Sprintf("Section '%s' requires at least %d tables, found %d", n.HeadingText(), requirement.Min, count), line, col))
 	}
 
 	// Check maximum requirement
 	if requirement.Max > 0 && count > requirement.Max {
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: fmt.Sprintf("Section '%s' has too many tables (max %d, found %d)", n.HeadingText(), requirement.Max, count),
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations,
+			NewViolation(r.Name(), fmt.Sprintf("Section '%s' has too many tables (max %d, found %d)", n.HeadingText(), requirement.Max, count), line, col))
 	}
 
 	// Check minimum columns requirement
 	if requirement.MinColumns > 0 {
 		for _, table := range tables {
 			if len(table.Headers) < requirement.MinColumns {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: fmt.Sprintf("Table in section '%s' has too few columns (minimum %d, found %d)", n.HeadingText(), requirement.MinColumns, len(table.Headers)),
-					Line:    table.Line,
-					Column:  table.Column,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), fmt.Sprintf("Table in section '%s' has too few columns (minimum %d, found %d)", n.HeadingText(), requirement.MinColumns, len(table.Headers)), table.Line, table.Column))
 			}
 		}
 	}
@@ -78,12 +66,8 @@ func (r *TableRule) validateTableRequirement(n *vast.Node, requirement schema.Ta
 
 			for _, required := range requirement.RequiredHeaders {
 				if !headerSet[strings.ToLower(required)] {
-					violations = append(violations, Violation{
-						Rule:    r.Name(),
-						Message: fmt.Sprintf("Table in section '%s' is missing required header '%s'", n.HeadingText(), required),
-						Line:    table.Line,
-						Column:  table.Column,
-					})
+					violations = append(violations,
+						NewViolation(r.Name(), fmt.Sprintf("Table in section '%s' is missing required header '%s'", n.HeadingText(), required), table.Line, table.Column))
 				}
 			}
 		}

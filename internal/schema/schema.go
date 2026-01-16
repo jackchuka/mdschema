@@ -49,6 +49,9 @@ type StructureElement struct {
 	// Optional element flag
 	Optional bool `yaml:"optional,omitempty" lc:"section is not required"`
 
+	// Severity level for violations (error, warning, info). Default: error
+	Severity string `yaml:"severity,omitempty" lc:"violation severity: error, warning, or info"`
+
 	// Hierarchical children elements
 	Children []StructureElement `yaml:"children,omitempty" lc:"nested subsections"`
 

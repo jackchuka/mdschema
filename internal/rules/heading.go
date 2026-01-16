@@ -91,12 +91,8 @@ func (r *HeadingRule) validateNoSkipLevels(headings []*parser.Heading) []Violati
 
 		// If heading level increases by more than 1, it's a skip
 		if h.Level > prevLevel+1 {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Heading level skipped: '%s' (h%d) after h%d", h.Text, h.Level, prevLevel),
-				Line:    h.Line,
-				Column:  h.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Heading level skipped: '%s' (h%d) after h%d", h.Text, h.Level, prevLevel), h.Line, h.Column))
 		}
 
 		prevLevel = h.Level
@@ -114,12 +110,8 @@ func (r *HeadingRule) validateUniqueHeadings(headings []*parser.Heading) []Viola
 	for _, h := range headings {
 		normalizedText := strings.ToLower(strings.TrimSpace(h.Text))
 		if existing, ok := seen[normalizedText]; ok {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Duplicate heading '%s' (first occurrence at line %d)", h.Text, existing.Line),
-				Line:    h.Line,
-				Column:  h.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Duplicate heading '%s' (first occurrence at line %d)", h.Text, existing.Line), h.Line, h.Column))
 		} else {
 			seen[normalizedText] = h
 		}
@@ -142,12 +134,8 @@ func (r *HeadingRule) validateUniquePerLevel(headings []*parser.Heading) []Viola
 
 		normalizedText := strings.ToLower(strings.TrimSpace(h.Text))
 		if existing, ok := seenByLevel[h.Level][normalizedText]; ok {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Duplicate h%d heading '%s' (first occurrence at line %d)", h.Level, h.Text, existing.Line),
-				Line:    h.Line,
-				Column:  h.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Duplicate h%d heading '%s' (first occurrence at line %d)", h.Level, h.Text, existing.Line), h.Line, h.Column))
 		} else {
 			seenByLevel[h.Level][normalizedText] = h
 		}
@@ -162,12 +150,8 @@ func (r *HeadingRule) validateMaxDepth(headings []*parser.Heading, maxDepth int)
 
 	for _, h := range headings {
 		if h.Level > maxDepth {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Heading '%s' (h%d) exceeds maximum depth of %d", h.Text, h.Level, maxDepth),
-				Line:    h.Line,
-				Column:  h.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Heading '%s' (h%d) exceeds maximum depth of %d", h.Text, h.Level, maxDepth), h.Line, h.Column))
 		}
 	}
 

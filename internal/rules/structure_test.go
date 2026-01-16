@@ -335,3 +335,80 @@ func TestStructureRuleOrderMatchingSkipsEarlierHeadings(t *testing.T) {
 		t.Fatalf("Expected missing Overview violation, got: %+v", violations)
 	}
 }
+
+func TestStructureRuleSeverityLevels(t *testing.T) {
+	tests := []struct {
+		name             string
+		markdown         string
+		severity         string
+		expectedSeverity Severity
+	}{
+		{
+			name:             "default severity is error",
+			markdown:         "# Title\n",
+			severity:         "",
+			expectedSeverity: SeverityError,
+		},
+		{
+			name:             "warning severity",
+			markdown:         "# Title\n",
+			severity:         "warning",
+			expectedSeverity: SeverityWarning,
+		},
+		{
+			name:             "info severity",
+			markdown:         "# Title\n",
+			severity:         "info",
+			expectedSeverity: SeverityInfo,
+		},
+		{
+			name:             "error severity (explicit)",
+			markdown:         "# Title\n",
+			severity:         "error",
+			expectedSeverity: SeverityError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := parser.New()
+			doc, err := p.Parse("test.md", []byte(tt.markdown))
+			if err != nil {
+				t.Fatalf("Parse() error: %v", err)
+			}
+
+			s := &schema.Schema{
+				Structure: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+					{
+						Heading:  schema.HeadingPattern{Pattern: "## Changelog"},
+						Severity: tt.severity,
+					},
+				},
+			}
+
+			ctx := vast.NewContext(doc, s)
+			rule := NewStructureRule()
+			violations := rule.ValidateWithContext(ctx)
+
+			if len(violations) == 0 {
+				t.Fatal("Expected violations for missing Changelog section")
+			}
+
+			found := false
+			for _, v := range violations {
+				if strings.Contains(v.Message, "Changelog") {
+					found = true
+					if v.Severity != tt.expectedSeverity {
+						t.Errorf("Severity = %q, want %q", v.Severity, tt.expectedSeverity)
+					}
+					break
+				}
+			}
+
+			if !found {
+				t.Error("Expected violation mentioning missing 'Changelog' section")
+			}
+		})
+	}
+}

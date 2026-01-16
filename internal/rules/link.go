@@ -77,12 +77,8 @@ func (r *LinkValidationRule) validateLink(link *parser.Link, rule *schema.LinkRu
 	if anchor, found := strings.CutPrefix(url, "#"); found {
 		if rule.ValidateInternal {
 			if !ctx.HasSlug(anchor) {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: fmt.Sprintf("Broken internal link: anchor '%s' does not exist in the document", url),
-					Line:    link.Line,
-					Column:  link.Column,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), fmt.Sprintf("Broken internal link: anchor '%s' does not exist in the document", url), link.Line, link.Column))
 			}
 		}
 		return violations
@@ -108,12 +104,8 @@ func (r *LinkValidationRule) validateExternalLink(link *parser.Link, rule *schem
 
 	parsedURL, err := url.Parse(link.URL)
 	if err != nil {
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: fmt.Sprintf("Invalid URL format: %s", link.URL),
-			Line:    link.Line,
-			Column:  link.Column,
-		})
+		violations = append(violations,
+			NewViolation(r.Name(), fmt.Sprintf("Invalid URL format: %s", link.URL), link.Line, link.Column))
 		return violations
 	}
 
@@ -123,12 +115,8 @@ func (r *LinkValidationRule) validateExternalLink(link *parser.Link, rule *schem
 	if len(rule.BlockedDomains) > 0 {
 		for _, blocked := range rule.BlockedDomains {
 			if strings.EqualFold(host, blocked) || strings.HasSuffix(strings.ToLower(host), "."+strings.ToLower(blocked)) {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: fmt.Sprintf("Link to blocked domain: %s", host),
-					Line:    link.Line,
-					Column:  link.Column,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), fmt.Sprintf("Link to blocked domain: %s", host), link.Line, link.Column))
 				return violations
 			}
 		}
@@ -144,12 +132,8 @@ func (r *LinkValidationRule) validateExternalLink(link *parser.Link, rule *schem
 			}
 		}
 		if !allowed {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Link to domain '%s' is not in the allowed domains list", host),
-				Line:    link.Line,
-				Column:  link.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Link to domain '%s' is not in the allowed domains list", host), link.Line, link.Column))
 			return violations
 		}
 	}
@@ -166,12 +150,8 @@ func (r *LinkValidationRule) validateExternalLink(link *parser.Link, rule *schem
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodHead, link.URL, nil)
 		if err != nil {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Failed to create request for URL: %s", link.URL),
-				Line:    link.Line,
-				Column:  link.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Failed to create request for URL: %s", link.URL), link.Line, link.Column))
 			return violations
 		}
 
@@ -183,12 +163,8 @@ func (r *LinkValidationRule) validateExternalLink(link *parser.Link, rule *schem
 
 		resp, err := client.Do(req)
 		if err != nil {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Failed to reach URL '%s': %v", link.URL, err),
-				Line:    link.Line,
-				Column:  link.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Failed to reach URL '%s': %v", link.URL, err), link.Line, link.Column))
 			return violations
 		}
 		defer func() {
@@ -196,12 +172,8 @@ func (r *LinkValidationRule) validateExternalLink(link *parser.Link, rule *schem
 		}()
 
 		if resp.StatusCode >= 400 {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("URL '%s' returned status %d", link.URL, resp.StatusCode),
-				Line:    link.Line,
-				Column:  link.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("URL '%s' returned status %d", link.URL, resp.StatusCode), link.Line, link.Column))
 		}
 	}
 
@@ -228,12 +200,8 @@ func (r *LinkValidationRule) validateFileLink(link *parser.Link, docDir string) 
 	targetPath = filepath.Clean(targetPath)
 
 	if _, err := os.Stat(targetPath); os.IsNotExist(err) {
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: fmt.Sprintf("Broken file link: '%s' does not exist", link.URL),
-			Line:    link.Line,
-			Column:  link.Column,
-		})
+		violations = append(violations,
+			NewViolation(r.Name(), fmt.Sprintf("Broken file link: '%s' does not exist", link.URL), link.Line, link.Column))
 	}
 
 	return violations

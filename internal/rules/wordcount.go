@@ -63,22 +63,14 @@ func (r *WordCountRule) ValidateWithContext(ctx *vast.Context) []Violation {
 
 			// Check minimum requirement
 			if rule.Min > 0 && wordCount < rule.Min {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: fmt.Sprintf("Section '%s' has too few words (minimum %d, found %d)", n.HeadingText(), rule.Min, wordCount),
-					Line:    line,
-					Column:  col,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), fmt.Sprintf("Section '%s' has too few words (minimum %d, found %d)", n.HeadingText(), rule.Min, wordCount), line, col))
 			}
 
 			// Check maximum requirement
 			if rule.Max > 0 && wordCount > rule.Max {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: fmt.Sprintf("Section '%s' has too many words (maximum %d, found %d)", n.HeadingText(), rule.Max, wordCount),
-					Line:    line,
-					Column:  col,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), fmt.Sprintf("Section '%s' has too many words (maximum %d, found %d)", n.HeadingText(), rule.Max, wordCount), line, col))
 			}
 		}
 		return true

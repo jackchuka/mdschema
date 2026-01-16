@@ -9,6 +9,18 @@ import (
 	"github.com/jackchuka/mdschema/internal/vast"
 )
 
+// severityFromSchema converts a schema severity string to rules.Severity
+func severityFromSchema(s string) Severity {
+	switch s {
+	case "warning":
+		return SeverityWarning
+	case "info":
+		return SeverityInfo
+	default:
+		return SeverityError
+	}
+}
+
 // StructureRule validates document structure using the hierarchical AST
 type StructureRule struct {
 	matcher *vast.PatternMatcher
@@ -50,12 +62,9 @@ func (r *StructureRule) ValidateWithContext(ctx *vast.Context) []Violation {
 				parentName = n.Parent.HeadingText()
 			}
 
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Required element %q not found within %q", n.Element.Heading.Pattern, parentName),
-				Line:    line,
-				Column:  col,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Required element %q not found within %q", n.Element.Heading.Pattern, parentName), line, col).
+					WithSeverity(severityFromSchema(n.Element.Severity)))
 		}
 		return true
 	})
@@ -90,12 +99,9 @@ func (r *StructureRule) validateFirstHeadingIssues(ctx *vast.Context) []Violatio
 			if firstActual.Heading != nil {
 				if !r.matcher.MatchesHeadingPattern(firstActual.Heading, firstExpected.Heading.Pattern, firstExpected.Heading.Regex) {
 					actualHeading := strings.Repeat("#", firstActual.Heading.Level) + " " + firstActual.Heading.Text
-					violations = append(violations, Violation{
-						Rule:    r.Name(),
-						Message: fmt.Sprintf("First heading under %q is %q but expected %q", "document root", actualHeading, firstExpected.Heading.Pattern),
-						Line:    firstActual.Heading.Line,
-						Column:  firstActual.Heading.Column,
-					})
+					violations = append(violations,
+						NewViolation(r.Name(), fmt.Sprintf("First heading under %q is %q but expected %q", "document root", actualHeading, firstExpected.Heading.Pattern), firstActual.Heading.Line, firstActual.Heading.Column).
+							WithSeverity(severityFromSchema(firstExpected.Severity)))
 				}
 			}
 		}
@@ -120,12 +126,9 @@ func (r *StructureRule) validateFirstHeadingIssues(ctx *vast.Context) []Violatio
 		if !r.matcher.MatchesHeadingPattern(firstActual.Heading, firstExpected.Heading.Pattern, firstExpected.Heading.Regex) {
 			actualHeading := strings.Repeat("#", firstActual.Heading.Level) + " " + firstActual.Heading.Text
 			parentName := n.Section.Heading.Text
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("First heading under %q is %q but expected %q", parentName, actualHeading, firstExpected.Heading.Pattern),
-				Line:    firstActual.Heading.Line,
-				Column:  firstActual.Heading.Column,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("First heading under %q is %q but expected %q", parentName, actualHeading, firstExpected.Heading.Pattern), firstActual.Heading.Line, firstActual.Heading.Column).
+					WithSeverity(severityFromSchema(firstExpected.Severity)))
 		}
 
 		return true
@@ -149,12 +152,8 @@ func (r *StructureRule) validateUnmatchedSections(ctx *vast.Context) []Violation
 		if section.Parent != nil && section.Parent.Heading != nil {
 			parent = section.Parent.Heading.Text
 		}
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: fmt.Sprintf("Unexpected section %q found under %q", heading, parent),
-			Line:    section.Heading.Line,
-			Column:  section.Heading.Column,
-		})
+		violations = append(violations,
+			NewViolation(r.Name(), fmt.Sprintf("Unexpected section %q found under %q", heading, parent), section.Heading.Line, section.Heading.Column))
 	}
 
 	return violations
@@ -206,12 +205,9 @@ func (r *StructureRule) checkSiblingOrder(siblings []*vast.Node, sections []*par
 					continue
 				}
 				if r.matcher.MatchesHeadingPattern(section.Heading, node.Element.Heading.Pattern, node.Element.Heading.Regex) {
-					violations = append(violations, Violation{
-						Rule:    r.Name(),
-						Message: fmt.Sprintf("Element %q should appear after %q but appears before it", section.Heading.Text, maxBoundText),
-						Line:    section.Heading.Line,
-						Column:  section.Heading.Column,
-					})
+					violations = append(violations,
+						NewViolation(r.Name(), fmt.Sprintf("Element %q should appear after %q but appears before it", section.Heading.Text, maxBoundText), section.Heading.Line, section.Heading.Column).
+							WithSeverity(severityFromSchema(node.Element.Severity)))
 					break
 				}
 			}

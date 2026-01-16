@@ -60,12 +60,7 @@ func (r *ImageRule) validateImageRequirement(n *vast.Node, requirement schema.Im
 				n.HeadingText(), requirement.Min, strings.Join(requirement.Formats, ", "), count)
 		}
 
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: message,
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
 	// Check maximum requirement
@@ -73,24 +68,15 @@ func (r *ImageRule) validateImageRequirement(n *vast.Node, requirement schema.Im
 		message := fmt.Sprintf("Section '%s' has too many images (max %d, found %d)",
 			n.HeadingText(), requirement.Max, count)
 
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: message,
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
 	// Check alt text requirement
 	if requirement.RequireAlt {
 		for _, img := range images {
 			if strings.TrimSpace(img.Alt) == "" {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: fmt.Sprintf("Image in section '%s' is missing alt text", n.HeadingText()),
-					Line:    img.Line,
-					Column:  img.Column,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), fmt.Sprintf("Image in section '%s' is missing alt text", n.HeadingText()), img.Line, img.Column))
 			}
 		}
 	}

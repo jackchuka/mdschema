@@ -40,12 +40,8 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 
 	// Check if frontmatter is required but missing
 	if !config.Optional && fm == nil {
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: "Frontmatter is required but not found",
-			Line:    1,
-			Column:  1,
-		})
+		violations = append(violations,
+			NewViolation(r.Name(), "Frontmatter is required but not found", 1, 1))
 		return violations
 	}
 
@@ -56,12 +52,8 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 
 	// If frontmatter exists but couldn't be parsed, report error
 	if fm.Data == nil {
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: "Frontmatter could not be parsed as valid YAML",
-			Line:    1,
-			Column:  1,
-		})
+		violations = append(violations,
+			NewViolation(r.Name(), "Frontmatter could not be parsed as valid YAML", 1, 1))
 		return violations
 	}
 
@@ -70,12 +62,8 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 		value, exists := fm.Data[field.Name]
 
 		if !field.Optional && !exists {
-			violations = append(violations, Violation{
-				Rule:    r.Name(),
-				Message: fmt.Sprintf("Required frontmatter field '%s' is missing", field.Name),
-				Line:    1,
-				Column:  1,
-			})
+			violations = append(violations,
+				NewViolation(r.Name(), fmt.Sprintf("Required frontmatter field '%s' is missing", field.Name), 1, 1))
 			continue
 		}
 
@@ -86,24 +74,16 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 		// Validate field type if specified
 		if field.Type != "" {
 			if err := r.validateFieldType(field.Name, value, field.Type); err != "" {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: err,
-					Line:    1,
-					Column:  1,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), err, 1, 1))
 			}
 		}
 
 		// Validate field format if specified
 		if field.Format != "" {
 			if err := r.validateFieldFormat(field.Name, value, field.Format); err != "" {
-				violations = append(violations, Violation{
-					Rule:    r.Name(),
-					Message: err,
-					Line:    1,
-					Column:  1,
-				})
+				violations = append(violations,
+					NewViolation(r.Name(), err, 1, 1))
 			}
 		}
 	}

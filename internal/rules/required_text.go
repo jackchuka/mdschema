@@ -35,12 +35,8 @@ func (r *RequiredTextRule) ValidateWithContext(ctx *vast.Context) []Violation {
 			for _, pattern := range n.Element.RequiredText {
 				if !r.contentContainsPattern(n.Content(), pattern.Pattern, pattern.Regex) {
 					line, col := n.Location()
-					violations = append(violations, Violation{
-						Rule:    r.Name(),
-						Message: fmt.Sprintf("Required text '%s' not found in section '%s'", pattern.Pattern, n.HeadingText()),
-						Line:    line,
-						Column:  col,
-					})
+					violations = append(violations,
+						NewViolation(r.Name(), fmt.Sprintf("Required text '%s' not found in section '%s'", pattern.Pattern, n.HeadingText()), line, col))
 				}
 			}
 		}

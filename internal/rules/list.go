@@ -53,12 +53,7 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 				n.HeadingText(), requirement.Min, requirement.Type, matchingLists)
 		}
 
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: message,
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
 	// Check maximum requirement
@@ -70,12 +65,7 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 				n.HeadingText(), requirement.Type, requirement.Max, matchingLists)
 		}
 
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: message,
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
 	return violations

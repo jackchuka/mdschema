@@ -73,6 +73,9 @@ func (r *TextReporter) formatViolation(v rules.Violation) string {
 	case rules.SeverityInfo:
 		icon = "ℹ"
 		colorFunc = r.formatInfo
+	default:
+		icon = "✗"
+		colorFunc = r.formatError
 	}
 
 	position := fmt.Sprintf("%d:%d", v.Line, v.Column)
