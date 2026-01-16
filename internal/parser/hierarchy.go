@@ -5,10 +5,11 @@ import "strings"
 // buildHierarchicalSections creates a hierarchical tree of sections
 func (p *Parser) buildHierarchicalSections(headings []*Heading, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, content []byte) *Section {
 	// Create root section for top-level content
+	contentLineCount := len(strings.Split(string(content), "\n"))
 	root := &Section{
 		Heading:    nil, // No heading for root
 		StartLine:  1,
-		EndLine:    len(strings.Split(string(content), "\n")),
+		EndLine:    contentLineCount,
 		Children:   make([]*Section, 0),
 		Parent:     nil,
 		CodeBlocks: make([]*CodeBlock, 0),
@@ -114,10 +115,10 @@ func (p *Parser) associateContent(section *Section, codeBlocks []*CodeBlock, tab
 		sectionContent := make([]string, 0)
 		startIdx := section.StartLine
 		if section.Heading != nil {
-			startIdx = section.StartLine + 1 // Skip heading line
+			startIdx++ // Skip heading line
 		}
 		for lineIdx := startIdx; lineIdx <= section.EndLine && lineIdx <= len(contentLines); lineIdx++ {
-			if lineIdx-1 < len(contentLines) {
+			if lineIdx-1 >= 0 && lineIdx-1 < len(contentLines) {
 				sectionContent = append(sectionContent, contentLines[lineIdx-1])
 			}
 		}

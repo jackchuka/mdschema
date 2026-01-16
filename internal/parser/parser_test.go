@@ -491,6 +491,108 @@ func main() {}
 	}
 }
 
+// TestFrontmatterLineOffset verifies that line numbers are correct when frontmatter is present
+func TestFrontmatterLineOffset(t *testing.T) {
+	p := New()
+	// Frontmatter takes 4 lines (lines 1-4), so heading should be at line 5
+	content := []byte(`---
+title: Test
+---
+
+# Heading
+
+Some content.
+
+## Second Heading
+`)
+	doc, err := p.Parse("test.md", content)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	sections := doc.GetSections()
+	if len(sections) != 2 {
+		t.Fatalf("GetSections() returned %d sections, want 2", len(sections))
+	}
+
+	// First heading should be at line 5 (after 4-line frontmatter)
+	if sections[0].Heading.Line != 5 {
+		t.Errorf("first heading Line = %d, want 5", sections[0].Heading.Line)
+	}
+
+	// Second heading should be at line 9
+	if sections[1].Heading.Line != 9 {
+		t.Errorf("second heading Line = %d, want 9", sections[1].Heading.Line)
+	}
+}
+
+// TestFrontmatterLineOffsetCodeBlocks verifies code block line numbers with frontmatter
+func TestFrontmatterLineOffsetCodeBlocks(t *testing.T) {
+	p := New()
+	content := []byte(`---
+key: value
+---
+
+# Code Section
+
+` + "```go" + `
+func main() {}
+` + "```" + `
+`)
+	doc, err := p.Parse("test.md", content)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	sections := doc.GetSections()
+	if len(sections) != 1 {
+		t.Fatalf("GetSections() returned %d sections, want 1", len(sections))
+	}
+
+	// Heading should be at line 5
+	if sections[0].Heading.Line != 5 {
+		t.Errorf("heading Line = %d, want 5", sections[0].Heading.Line)
+	}
+
+	// Code block content starts at line 8 (goldmark reports first content line, not fence line)
+	if len(sections[0].CodeBlocks) != 1 {
+		t.Fatalf("section has %d code blocks, want 1", len(sections[0].CodeBlocks))
+	}
+	if sections[0].CodeBlocks[0].Line != 8 {
+		t.Errorf("code block Line = %d, want 8", sections[0].CodeBlocks[0].Line)
+	}
+}
+
+// TestNoFrontmatterLineNumbers verifies line numbers without frontmatter
+func TestNoFrontmatterLineNumbers(t *testing.T) {
+	p := New()
+	content := []byte(`# First Heading
+
+Content.
+
+## Second Heading
+`)
+	doc, err := p.Parse("test.md", content)
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	sections := doc.GetSections()
+	if len(sections) != 2 {
+		t.Fatalf("GetSections() returned %d sections, want 2", len(sections))
+	}
+
+	// First heading should be at line 1
+	if sections[0].Heading.Line != 1 {
+		t.Errorf("first heading Line = %d, want 1", sections[0].Heading.Line)
+	}
+
+	// Second heading should be at line 5
+	if sections[1].Heading.Line != 5 {
+		t.Errorf("second heading Line = %d, want 5", sections[1].Heading.Line)
+	}
+}
+
 // TestIntroContentAttachedToRoot verifies that content before the first heading
 // is attached to the root section (Medium #1 fix)
 func TestIntroContentAttachedToRoot(t *testing.T) {
