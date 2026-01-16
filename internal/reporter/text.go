@@ -5,22 +5,20 @@ import (
 	"io"
 	"os"
 	"sort"
-	"strings"
 
+	"github.com/fatih/color"
 	"github.com/jackchuka/mdschema/internal/rules"
 )
 
 // TextReporter outputs violations in human-readable text format
 type TextReporter struct {
 	writer io.Writer
-	colors bool
 }
 
 // NewTextReporter creates a new text reporter
 func NewTextReporter() *TextReporter {
 	return &TextReporter{
 		writer: os.Stdout,
-		colors: isTerminal(),
 	}
 }
 
@@ -95,49 +93,25 @@ func (r *TextReporter) formatRule(rule string) string {
 
 // Color formatting functions
 func (r *TextReporter) formatError(s string) string {
-	if r.colors {
-		return fmt.Sprintf("\033[31m%s\033[0m", s) // Red
-	}
-	return s
+	return color.RedString(s)
 }
 
 func (r *TextReporter) formatWarning(s string) string {
-	if r.colors {
-		return fmt.Sprintf("\033[33m%s\033[0m", s) // Yellow
-	}
-	return s
+	return color.YellowString(s)
 }
 
 func (r *TextReporter) formatInfo(s string) string {
-	if r.colors {
-		return fmt.Sprintf("\033[36m%s\033[0m", s) // Cyan
-	}
-	return s
+	return color.CyanString(s)
 }
 
 func (r *TextReporter) formatSuccess(s string) string {
-	if r.colors {
-		return fmt.Sprintf("\033[32m%s\033[0m", s) // Green
-	}
-	return s
+	return color.GreenString(s)
 }
 
 func (r *TextReporter) formatBold(s string) string {
-	if r.colors {
-		return fmt.Sprintf("\033[1m%s\033[0m", s) // Bold
-	}
-	return s
+	return color.New(color.Bold).Sprint(s)
 }
 
 func (r *TextReporter) formatDim(s string) string {
-	if r.colors {
-		return fmt.Sprintf("\033[2m%s\033[0m", s) // Dim
-	}
-	return s
-}
-
-// isTerminal checks if stdout is a terminal
-func isTerminal() bool {
-	// Simple check - could be enhanced with platform-specific code
-	return os.Getenv("TERM") != "" && !strings.Contains(os.Getenv("TERM"), "dumb")
+	return color.New(color.Faint).Sprint(s)
 }
