@@ -8,32 +8,65 @@ import (
 	"github.com/jackchuka/mdschema/internal/vast"
 )
 
-// ContextualRule is an enhanced rule interface that uses pre-built VAST
-type ContextualRule interface {
+// Rule is the base interface for all validation rules
+type Rule interface {
 	// Name returns the rule identifier
 	Name() string
 
 	// ValidateWithContext uses pre-established section-schema mappings via VAST
 	ValidateWithContext(ctx *vast.Context) []Violation
+}
+
+// StructuralRule validates and generates content for structure elements (sections)
+type StructuralRule interface {
+	Rule
 
 	// GenerateContent generates markdown content for elements that match this rule
 	// Returns true if the rule handled content generation for this element
 	GenerateContent(builder *strings.Builder, element schema.StructureElement) bool
 }
 
-// Validator manages and runs all rules
-type Validator struct {
-	rules []ContextualRule
+// FrontmatterGenerator generates document-level frontmatter content
+type FrontmatterGenerator interface {
+	Generate(builder *strings.Builder, s *schema.Schema) bool
 }
 
-// defaultRules returns the standard set of validation rules for v0.1 DSL
-func defaultRules() []ContextualRule {
-	return []ContextualRule{
+// Validator manages and runs all rules
+type Validator struct {
+	rules []Rule
+}
+
+// defaultStructuralRules returns the standard set of structural validation rules
+func defaultStructuralRules() []StructuralRule {
+	return []StructuralRule{
 		NewStructureRule(),
 		NewRequiredTextRule(),
+		NewForbiddenTextRule(),
 		NewCodeBlockRule(),
+		NewImageRule(),
+		NewTableRule(),
+		NewListRule(),
+		NewWordCountRule(),
+	}
+}
+
+// defaultDocumentRules returns validation rules that operate at document level
+func defaultDocumentRules() []Rule {
+	return []Rule{
+		NewHeadingRule(),
 		NewLinkValidationRule(),
 	}
+}
+
+// defaultRules returns all rules as base Rule interface
+func defaultRules() []Rule {
+	rules := make([]Rule, 0)
+	for _, r := range defaultStructuralRules() {
+		rules = append(rules, r)
+	}
+	rules = append(rules, defaultDocumentRules()...)
+	rules = append(rules, NewFrontmatterRule())
+	return rules
 }
 
 // NewValidator creates a new validator with default rules for v0.1 DSL
@@ -51,7 +84,6 @@ func (v *Validator) Validate(doc *parser.Document, s *schema.Schema) []Violation
 	ctx := vast.NewContext(doc, s)
 
 	for _, rule := range v.rules {
-		// Try to use contextual validation if the rule supports it
 		ruleViolations := rule.ValidateWithContext(ctx)
 		violations = append(violations, ruleViolations...)
 	}
@@ -59,24 +91,25 @@ func (v *Validator) Validate(doc *parser.Document, s *schema.Schema) []Violation
 	return violations
 }
 
+// Generator creates markdown content using rules
+type Generator struct {
+	structuralRules      []StructuralRule
+	frontmatterGenerator FrontmatterGenerator
+}
+
 // NewGenerator creates a generator that uses the same rules as the validator
 func NewGenerator() *Generator {
 	return &Generator{
-		rules: defaultRules(),
+		structuralRules:      defaultStructuralRules(),
+		frontmatterGenerator: NewFrontmatterRule(),
 	}
-}
-
-// Generator creates markdown content using rules
-type Generator struct {
-	rules []ContextualRule
 }
 
 // GenerateContent generates content for an element using all applicable rules
 func (g *Generator) GenerateContent(builder *strings.Builder, element schema.StructureElement) {
 	contentGenerated := false
 
-	// Let each rule try to generate content for this element
-	for _, rule := range g.rules {
+	for _, rule := range g.structuralRules {
 		if rule.GenerateContent(builder, element) {
 			contentGenerated = true
 		}
@@ -86,4 +119,9 @@ func (g *Generator) GenerateContent(builder *strings.Builder, element schema.Str
 	if !contentGenerated {
 		builder.WriteString("TODO: Add content for this section.\n\n")
 	}
+}
+
+// GenerateFrontmatter generates document frontmatter using the frontmatter generator
+func (g *Generator) GenerateFrontmatter(builder *strings.Builder, s *schema.Schema) {
+	g.frontmatterGenerator.Generate(builder, s)
 }

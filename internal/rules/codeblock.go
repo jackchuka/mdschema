@@ -12,7 +12,7 @@ import (
 type CodeBlockRule struct {
 }
 
-var _ ContextualRule = (*CodeBlockRule)(nil)
+var _ StructuralRule = (*CodeBlockRule)(nil)
 
 // NewCodeBlockRule creates a new simplified code block rule
 func NewCodeBlockRule() *CodeBlockRule {
@@ -46,12 +46,7 @@ func (r *CodeBlockRule) validateCodeBlockRequirement(n *vast.Node, requirement s
 				n.HeadingText(), requirement.Min, requirement.Lang, count)
 		}
 
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: message,
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
 	// Check maximum requirement
@@ -62,12 +57,7 @@ func (r *CodeBlockRule) validateCodeBlockRequirement(n *vast.Node, requirement s
 				n.HeadingText(), requirement.Lang, requirement.Max, count)
 		}
 
-		violations = append(violations, Violation{
-			Rule:    r.Name(),
-			Message: message,
-			Line:    line,
-			Column:  col,
-		})
+		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
 	return violations

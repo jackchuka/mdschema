@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/yuin/goldmark"
+	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	east "github.com/yuin/goldmark/extension/ast"
@@ -21,7 +22,10 @@ type Parser struct {
 func New() *Parser {
 	return &Parser{
 		md: goldmark.New(
-			goldmark.WithExtensions(extension.Table),
+			goldmark.WithExtensions(
+				extension.Table,
+				meta.Meta,
+			),
 			goldmark.WithParserOptions(
 				parser.WithAutoHeadingID(),
 			),
@@ -41,8 +45,19 @@ func (p *Parser) ParseFile(path string) (*Document, error) {
 
 // Parse parses Markdown content
 func (p *Parser) Parse(path string, content []byte) (*Document, error) {
+	// Create a parser context to capture metadata
+	ctx := parser.NewContext()
 	reader := text.NewReader(content)
-	node := p.md.Parser().Parse(reader)
+	node := p.md.Parser().Parse(reader, parser.WithContext(ctx))
+
+	// Extract frontmatter from goldmark-meta
+	var frontMatter *FrontMatter
+	if metaData := meta.Get(ctx); metaData != nil {
+		frontMatter = &FrontMatter{
+			Format: "yaml",
+			Data:   metaData,
+		}
+	}
 
 	// Temporary collections for building the tree
 	headings := make([]*Heading, 0)
@@ -94,10 +109,11 @@ func (p *Parser) Parse(path string, content []byte) (*Document, error) {
 
 	// Create the document
 	doc := &Document{
-		Path:    path,
-		Content: content,
-		AST:     node,
-		Root:    root,
+		Path:        path,
+		Content:     content,
+		AST:         node,
+		Root:        root,
+		FrontMatter: frontMatter,
 	}
 
 	return doc, nil

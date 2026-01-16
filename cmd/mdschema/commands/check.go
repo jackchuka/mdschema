@@ -59,12 +59,9 @@ func runCheck(cfg *Config, globs []string) error {
 		// Validate against all schemas
 		for _, s := range schemas {
 			violations := validator.Validate(doc, s)
-			// Set file path and default severity for each violation
+			// Set file path for each violation
 			for i := range violations {
-				violations[i].Path = file
-				if violations[i].Severity == "" {
-					violations[i].Severity = rules.SeverityError
-				}
+				violations[i] = violations[i].WithPath(file)
 			}
 			allViolations = append(allViolations, violations...)
 		}

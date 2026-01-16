@@ -31,10 +31,6 @@ func TestGenerateBasicStructure(t *testing.T) {
 	if !strings.Contains(output, "# Title") {
 		t.Error("Generated output should contain the heading")
 	}
-
-	if !strings.Contains(output, "<!-- Generated from schema -->") {
-		t.Error("Generated output should contain header comment")
-	}
 }
 
 func TestGenerateOptionalSection(t *testing.T) {
@@ -208,17 +204,103 @@ func TestGenerateDeeplyNested(t *testing.T) {
 	}
 }
 
-func TestGenerateEmptySchema(t *testing.T) {
+func TestGenerateFrontmatter(t *testing.T) {
 	g := New()
 
 	s := &schema.Schema{
+		Frontmatter: &schema.FrontmatterConfig{
+			// Optional: false is default, meaning frontmatter is required
+			Fields: []schema.FrontmatterField{
+				{Name: "title", Type: schema.FieldTypeString},               // required by default
+				{Name: "date", Type: schema.FieldTypeDate},                  // required by default
+				{Name: "tags", Optional: true, Type: schema.FieldTypeArray}, // explicitly optional
+				{Name: "draft", Type: schema.FieldTypeBoolean},              // required by default
+				{Name: "version", Type: schema.FieldTypeNumber},             // required by default
+			},
+		},
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+		},
+	}
+
+	output := g.Generate(s)
+
+	// Check frontmatter delimiters
+	if !strings.Contains(output, "---\n") {
+		t.Error("Generated output should contain frontmatter delimiters")
+	}
+
+	// Check required fields have comments
+	if !strings.Contains(output, "title: \"TODO\" # required") {
+		t.Error("Generated output should contain title field with required comment")
+	}
+
+	if !strings.Contains(output, "date: 2024-01-01 # required") {
+		t.Error("Generated output should contain date field")
+	}
+
+	// Check optional fields don't have required comment
+	if !strings.Contains(output, "tags: [\"item1\", \"item2\"]\n") {
+		t.Error("Generated output should contain tags array field without required comment")
+	}
+
+	// Check boolean placeholder (now required by default)
+	if !strings.Contains(output, "draft: false # required") {
+		t.Error("Generated output should contain draft boolean field with required comment")
+	}
+
+	// Check number placeholder (now required by default)
+	if !strings.Contains(output, "version: 0 # required") {
+		t.Error("Generated output should contain version number field with required comment")
+	}
+}
+
+func TestGenerateFrontmatterFormats(t *testing.T) {
+	g := New()
+
+	s := &schema.Schema{
+		Frontmatter: &schema.FrontmatterConfig{
+			Fields: []schema.FrontmatterField{
+				{Name: "author_email", Format: schema.FieldFormatEmail},
+				{Name: "website", Format: schema.FieldFormatURL},
+				{Name: "published", Format: schema.FieldFormatDate},
+			},
+		},
 		Structure: []schema.StructureElement{},
 	}
 
 	output := g.Generate(s)
 
-	// Should just have the header comment
-	if !strings.Contains(output, "<!-- Generated from schema -->") {
-		t.Error("Should contain header comment even for empty schema")
+	if !strings.Contains(output, "author_email: user@example.com") {
+		t.Error("Generated output should contain email format placeholder")
+	}
+
+	if !strings.Contains(output, "website: https://example.com") {
+		t.Error("Generated output should contain URL format placeholder")
+	}
+
+	if !strings.Contains(output, "published: 2024-01-01") {
+		t.Error("Generated output should contain date format placeholder")
+	}
+}
+
+func TestGenerateNoFrontmatter(t *testing.T) {
+	g := New()
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+		},
+	}
+
+	output := g.Generate(s)
+
+	// Should not contain frontmatter delimiters when no frontmatter config
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		if line == "---" {
+			t.Error("Generated output should not contain frontmatter when not configured")
+			break
+		}
 	}
 }

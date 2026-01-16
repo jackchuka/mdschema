@@ -2,6 +2,15 @@ package rules
 
 import "fmt"
 
+// Severity levels for violations
+type Severity string
+
+const (
+	SeverityError   Severity = "error"
+	SeverityWarning Severity = "warning"
+	SeverityInfo    Severity = "info"
+)
+
 // Violation represents a rule violation
 type Violation struct {
 	Rule     string
@@ -12,14 +21,27 @@ type Violation struct {
 	Severity Severity
 }
 
-// Severity levels for violations
-type Severity string
+// NewViolation creates a violation with default severity (error)
+func NewViolation(rule, message string, line, column int) Violation {
+	return Violation{
+		Rule:     rule,
+		Message:  message,
+		Line:     line,
+		Column:   column,
+		Severity: SeverityError,
+	}
+}
 
-const (
-	SeverityError   Severity = "error"
-	SeverityWarning Severity = "warning"
-	SeverityInfo    Severity = "info"
-)
+// WithSeverity returns a copy of the violation with the specified severity
+func (v Violation) WithSeverity(s Severity) Violation {
+	v.Severity = s
+	return v
+}
+
+func (v Violation) WithPath(path string) Violation {
+	v.Path = path
+	return v
+}
 
 // Error returns the violation as an error string
 func (v Violation) Error() string {

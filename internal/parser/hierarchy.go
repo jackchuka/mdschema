@@ -5,10 +5,11 @@ import "strings"
 // buildHierarchicalSections creates a hierarchical tree of sections
 func (p *Parser) buildHierarchicalSections(headings []*Heading, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, content []byte) *Section {
 	// Create root section for top-level content
+	contentLineCount := len(strings.Split(string(content), "\n"))
 	root := &Section{
 		Heading:    nil, // No heading for root
 		StartLine:  1,
-		EndLine:    len(strings.Split(string(content), "\n")),
+		EndLine:    contentLineCount,
 		Children:   make([]*Section, 0),
 		Parent:     nil,
 		CodeBlocks: make([]*CodeBlock, 0),
@@ -114,99 +115,48 @@ func (p *Parser) associateContent(section *Section, codeBlocks []*CodeBlock, tab
 		sectionContent := make([]string, 0)
 		startIdx := section.StartLine
 		if section.Heading != nil {
-			startIdx = section.StartLine + 1 // Skip heading line
+			startIdx++ // Skip heading line
 		}
 		for lineIdx := startIdx; lineIdx <= section.EndLine && lineIdx <= len(contentLines); lineIdx++ {
-			if lineIdx-1 < len(contentLines) {
+			if lineIdx-1 >= 0 && lineIdx-1 < len(contentLines) {
 				sectionContent = append(sectionContent, contentLines[lineIdx-1])
 			}
 		}
 		section.Content = strings.Join(sectionContent, "\n")
 	}
 
-	// Associate elements with this section (including root section for intro content)
-	for _, codeBlock := range codeBlocks {
-		if codeBlock.Line >= section.StartLine && codeBlock.Line <= section.EndLine {
-			// Check if it belongs to a child section
-			belongsToChild := false
-			for _, child := range section.Children {
-				if codeBlock.Line >= child.StartLine && codeBlock.Line <= child.EndLine {
-					belongsToChild = true
-					break
-				}
-			}
-			if !belongsToChild {
-				section.CodeBlocks = append(section.CodeBlocks, codeBlock)
-			}
-		}
-	}
-
-	for _, table := range tables {
-		if table.Line >= section.StartLine && table.Line <= section.EndLine {
-			// Check if it belongs to a child section
-			belongsToChild := false
-			for _, child := range section.Children {
-				if table.Line >= child.StartLine && table.Line <= child.EndLine {
-					belongsToChild = true
-					break
-				}
-			}
-			if !belongsToChild {
-				section.Tables = append(section.Tables, table)
-			}
-		}
-	}
-
-	for _, link := range links {
-		if link.Line >= section.StartLine && link.Line <= section.EndLine {
-			// Check if it belongs to a child section
-			belongsToChild := false
-			for _, child := range section.Children {
-				if link.Line >= child.StartLine && link.Line <= child.EndLine {
-					belongsToChild = true
-					break
-				}
-			}
-			if !belongsToChild {
-				section.Links = append(section.Links, link)
-			}
-		}
-	}
-
-	for _, image := range images {
-		if image.Line >= section.StartLine && image.Line <= section.EndLine {
-			// Check if it belongs to a child section
-			belongsToChild := false
-			for _, child := range section.Children {
-				if image.Line >= child.StartLine && image.Line <= child.EndLine {
-					belongsToChild = true
-					break
-				}
-			}
-			if !belongsToChild {
-				section.Images = append(section.Images, image)
-			}
-		}
-	}
-
-	for _, list := range lists {
-		if list.Line >= section.StartLine && list.Line <= section.EndLine {
-			// Check if it belongs to a child section
-			belongsToChild := false
-			for _, child := range section.Children {
-				if list.Line >= child.StartLine && list.Line <= child.EndLine {
-					belongsToChild = true
-					break
-				}
-			}
-			if !belongsToChild {
-				section.Lists = append(section.Lists, list)
-			}
-		}
-	}
+	// Associate elements with this section using generic helper
+	section.CodeBlocks = filterElements(section, codeBlocks)
+	section.Tables = filterElements(section, tables)
+	section.Links = filterElements(section, links)
+	section.Images = filterElements(section, images)
+	section.Lists = filterElements(section, lists)
 
 	// Recursively process children
 	for _, child := range section.Children {
 		p.associateContent(child, codeBlocks, tables, links, images, lists, contentLines)
 	}
+}
+
+// filterElements returns elements that belong to this section (not to child sections)
+func filterElements[T LineLocatable](section *Section, elements []T) []T {
+	var result []T
+	for _, elem := range elements {
+		line := elem.GetLine()
+		if line < section.StartLine || line > section.EndLine {
+			continue
+		}
+		// Check if it belongs to a child section
+		belongsToChild := false
+		for _, child := range section.Children {
+			if line >= child.StartLine && line <= child.EndLine {
+				belongsToChild = true
+				break
+			}
+		}
+		if !belongsToChild {
+			result = append(result, elem)
+		}
+	}
+	return result
 }

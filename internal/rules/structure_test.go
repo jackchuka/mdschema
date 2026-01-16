@@ -32,7 +32,12 @@ func TestStructureRuleValidMappings(t *testing.T) {
 
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+			{
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Section"}},
+				},
+			},
 		},
 	}
 
@@ -139,7 +144,7 @@ func TestStructureRuleWrongOrder(t *testing.T) {
 	}
 
 	if !found {
-		t.Log("Warning: ordering violation not detected (may be implementation-specific)")
+		t.Error("Expected violation for wrong ordering of sections")
 	}
 }
 
@@ -168,5 +173,379 @@ func TestStructureRuleGenerateContent(t *testing.T) {
 	}
 	if !strings.Contains(content, "Child1") {
 		t.Error("Should mention child elements")
+	}
+}
+
+func TestStructureRuleUnmatchedHeading(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Extra\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) == 0 {
+		t.Fatal("Expected violations for unmatched heading")
+	}
+
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Unexpected section") && strings.Contains(v.Message, "Extra") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("Expected unmatched heading violation for 'Extra', got: %+v", violations)
+	}
+}
+
+func TestStructureRuleRegexMatchesLicenseHeading(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# TEST\n\n## Overview\n\n# License\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
+					Regex:   true,
+				},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+			{
+				Heading:  schema.HeadingPattern{Pattern: "# License"},
+				Optional: true,
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	matches := ctx.Tree.GetByElement("# [A-Za-z0-9][A-Za-z0-9 _-]*")
+	if len(matches) != 1 {
+		t.Fatalf("Expected regex heading to match 1 root, got %d", len(matches))
+	}
+	if matches[0].HeadingText() != "TEST" {
+		t.Fatalf("Unexpected regex match: %q", matches[0].HeadingText())
+	}
+
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) != 0 {
+		t.Fatalf("Expected no violations, got: %+v", violations)
+	}
+}
+
+func TestStructureRuleRootFirstMismatch(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# 1.test\n\n# TEST\n\n## Overview\n\n# License\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
+					Regex:   true,
+				},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+			{
+				Heading:  schema.HeadingPattern{Pattern: "# License"},
+				Optional: true,
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) == 0 {
+		t.Fatal("Expected root-first violation, got none")
+	}
+
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "First heading") && strings.Contains(v.Message, "1.test") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("Expected root-first violation mentioning '1.test', got: %+v", violations)
+	}
+}
+
+func TestStructureRuleOrderMatchingSkipsEarlierHeadings(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# a\n\n# 1.test\n\n# TEST\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Pattern: "# 1.test"}},
+			{
+				Heading: schema.HeadingPattern{
+					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
+					Regex:   true,
+				},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+	if len(violations) == 0 {
+		t.Fatal("Expected violations for missing Overview")
+	}
+
+	foundOverview := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Overview") {
+			foundOverview = true
+			if strings.Contains(v.Message, "a") {
+				t.Fatalf("Expected missing Overview under TEST, got: %+v", v)
+			}
+		}
+	}
+	if !foundOverview {
+		t.Fatalf("Expected missing Overview violation, got: %+v", violations)
+	}
+}
+
+func TestStructureRuleAllowAdditional(t *testing.T) {
+	p := parser.New()
+	// Document has an extra "## Notes" section under "# Title" that is not in schema
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n## Notes\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading:         schema.HeadingPattern{Pattern: "# Title"},
+				AllowAdditional: true, // Allow extra subsections
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should NOT report violation for "Notes" since parent allows additional
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Notes") {
+			t.Errorf("Should not report violation for extra section when AllowAdditional is true: %s", v.Message)
+		}
+	}
+}
+
+func TestStructureRuleAllowAdditionalFalse(t *testing.T) {
+	p := parser.New()
+	// Document has an extra "## Notes" section under "# Title" that is not in schema
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n## Notes\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading:         schema.HeadingPattern{Pattern: "# Title"},
+				AllowAdditional: false, // Do not allow extra subsections (default)
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should report violation for "Notes" since parent does not allow additional
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Notes") && strings.Contains(v.Message, "Unexpected") {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Error("Expected violation for extra section when AllowAdditional is false")
+	}
+}
+
+func TestStructureRuleAllowAdditionalNested(t *testing.T) {
+	p := parser.New()
+	// Nested structure with extra sections at different levels
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n### Details\n\n### Extra\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
+				Children: []schema.StructureElement{
+					{
+						Heading:         schema.HeadingPattern{Pattern: "## Overview"},
+						AllowAdditional: true, // Allow extra subsections under Overview
+						Children: []schema.StructureElement{
+							{Heading: schema.HeadingPattern{Pattern: "### Details"}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should NOT report violation for "Extra" since parent (Overview) allows additional
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Extra") {
+			t.Errorf("Should not report violation for extra nested section when AllowAdditional is true: %s", v.Message)
+		}
+	}
+}
+
+func TestStructureRuleAllowAdditionalDeeplyNested(t *testing.T) {
+	p := parser.New()
+	// Extra section with its own children - all should be allowed
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n## Extra\n\n### Extra Child\n\n#### Extra Grandchild\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading:         schema.HeadingPattern{Pattern: "# Title"},
+				AllowAdditional: true, // Allow extra subsections
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should NOT report any violations - Extra, Extra Child, and Extra Grandchild are all allowed
+	if len(violations) > 0 {
+		t.Errorf("Should not report violations for descendants of allowed extra sections: %+v", violations)
+	}
+}
+
+func TestStructureRuleSeverityLevels(t *testing.T) {
+	tests := []struct {
+		name             string
+		markdown         string
+		severity         string
+		expectedSeverity Severity
+	}{
+		{
+			name:             "default severity is error",
+			markdown:         "# Title\n",
+			severity:         "",
+			expectedSeverity: SeverityError,
+		},
+		{
+			name:             "warning severity",
+			markdown:         "# Title\n",
+			severity:         "warning",
+			expectedSeverity: SeverityWarning,
+		},
+		{
+			name:             "info severity",
+			markdown:         "# Title\n",
+			severity:         "info",
+			expectedSeverity: SeverityInfo,
+		},
+		{
+			name:             "error severity (explicit)",
+			markdown:         "# Title\n",
+			severity:         "error",
+			expectedSeverity: SeverityError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := parser.New()
+			doc, err := p.Parse("test.md", []byte(tt.markdown))
+			if err != nil {
+				t.Fatalf("Parse() error: %v", err)
+			}
+
+			s := &schema.Schema{
+				Structure: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "# Title"}},
+					{
+						Heading:  schema.HeadingPattern{Pattern: "## Changelog"},
+						Severity: tt.severity,
+					},
+				},
+			}
+
+			ctx := vast.NewContext(doc, s)
+			rule := NewStructureRule()
+			violations := rule.ValidateWithContext(ctx)
+
+			if len(violations) == 0 {
+				t.Fatal("Expected violations for missing Changelog section")
+			}
+
+			found := false
+			for _, v := range violations {
+				if strings.Contains(v.Message, "Changelog") {
+					found = true
+					if v.Severity != tt.expectedSeverity {
+						t.Errorf("Severity = %q, want %q", v.Severity, tt.expectedSeverity)
+					}
+					break
+				}
+			}
+
+			if !found {
+				t.Error("Expected violation mentioning missing 'Changelog' section")
+			}
+		})
 	}
 }

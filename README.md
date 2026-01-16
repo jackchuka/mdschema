@@ -15,13 +15,15 @@ mdschema check README.md --schema ./examples/README-schema.yml
 
 ## Features
 
-- 🔍 **Schema-driven validation** - Define your documentation structure in simple YAML
-- 🌳 **Hierarchical structure** - Support for nested sections and complex document layouts
-- 📝 **Template generation** - Generate markdown templates from your schemas
-- 🔧 **Rule-based validation** - Validate headings, code blocks, required text, and structure order
-- 🎯 **Context-aware** - Uses AST parsing for accurate validation without string matching guesswork
-- 🚀 **Fast and lightweight** - Single binary with no dependencies
-- 💻 **Cross-platform** - Works on Linux, macOS, and Windows
+- **Schema-driven validation** - Define your documentation structure in simple YAML
+- **Hierarchical structure** - Support for nested sections and complex document layouts
+- **Template generation** - Generate markdown templates from your schemas
+- **Comprehensive rules** - Validate headings, code blocks, images, tables, lists, links, and more
+- **Frontmatter validation** - Validate YAML frontmatter with type and format checking
+- **Link validation** - Check internal anchors, relative files, and external URLs
+- **Context-aware** - Uses AST parsing for accurate validation without string matching
+- **Fast and lightweight** - Single binary with no dependencies
+- **Cross-platform** - Works on Linux, macOS, and Windows
 
 ## Installation
 
@@ -90,11 +92,28 @@ structure:
 
 ### Schema Elements
 
-- **`heading`** - Heading pattern, either as a string (literal match) or object `{pattern: "...", regex: true}` for regex
+#### Structure Elements
+
+- **`heading`** - Heading pattern (string for literal, or `{pattern: "...", regex: true}` for regex)
 - **`optional`** - Whether the section is optional (default: false)
+- **`allow_additional`** - Allow extra subsections not defined in schema (default: false)
 - **`children`** - Nested subsections that must appear within this section
-- **`code_blocks`** - Code block requirements with language and count constraints
-- **`required_text`** - Text patterns that must appear within the section (string or `{pattern: "...", regex: true}`)
+
+#### Section Rules (apply to each section)
+
+- **`required_text`** - Text that must appear (`"text"` or `{pattern: "...", regex: true}`)
+- **`forbidden_text`** - Text that must NOT appear (`"text"` or `{pattern: "...", regex: true}`)
+- **`code_blocks`** - Code block requirements: `{lang: "bash", min: 1, max: 3}`
+- **`images`** - Image requirements: `{min: 1, require_alt: true, formats: ["png", "svg"]}`
+- **`tables`** - Table requirements: `{min: 1, min_columns: 2, required_headers: ["Name"]}`
+- **`lists`** - List requirements: `{min: 1, type: "ordered", min_items: 3}`
+- **`word_count`** - Word count constraints: `{min: 50, max: 500}`
+
+#### Global Rules (apply to entire document)
+
+- **`links`** - Link validation (internal anchors, relative files, external URLs)
+- **`heading_rules`** - Heading constraints (no skipped levels, unique headings, max depth)
+- **`frontmatter`** - YAML frontmatter validation (required fields, types, formats)
 
 ## Commands
 
@@ -190,13 +209,121 @@ structure:
         optional: true
 ```
 
+### Flexible Documentation Schema (allow additional sections)
+
+```yaml
+structure:
+  - heading: "# Project Name"
+    allow_additional: true # Allow extra subsections not defined in schema
+    children:
+      - heading: "## Overview"
+      - heading: "## Installation"
+        code_blocks:
+          - { lang: bash, min: 1 }
+      # Users can add any other sections like "## FAQ", "## Troubleshooting", etc.
+```
+
+### Blog Post Schema (comprehensive example)
+
+```yaml
+# Global rules
+frontmatter:
+  # optional: false is default, meaning frontmatter is required
+  fields:
+    - { name: "title" } # required by default
+    - { name: "date", format: date } # required by default
+    - { name: "author", optional: true, format: email }
+    - { name: "tags", optional: true, type: array }
+
+heading_rules:
+  no_skip_levels: true
+  max_depth: 3
+
+links:
+  validate_internal: true
+  validate_files: true
+
+# Document structure
+structure:
+  - heading:
+      pattern: "# .*"
+      regex: true
+    children:
+      - heading: "## Introduction"
+        word_count: { min: 100, max: 300 }
+        forbidden_text: ["TODO", "FIXME"]
+      - heading: "## Content"
+        images:
+          - { min: 1, require_alt: true }
+        code_blocks:
+          - { min: 1 }
+      - heading: "## Conclusion"
+        word_count: { min: 50 }
+        lists:
+          - { min: 1, type: unordered }
+```
+
 ## Validation Rules
 
-mdschema includes several built-in validation rules:
+mdschema includes comprehensive validation rules organized into three categories:
 
-- **Structure** - Ensures sections appear in the correct order and hierarchy
-- **Required Text** - Validates that required text appears in sections
-- **Code Blocks** - Enforces code block requirements (language, minimum/maximum count)
+### Section Rules (per-section validation)
+
+| Rule               | Description                                        | Options                                              |
+| ------------------ | -------------------------------------------------- | ---------------------------------------------------- |
+| **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `allow_additional`, `children`|
+| **Required Text**  | Text/patterns that must appear                     | `pattern`, `regex`                              |
+| **Forbidden Text** | Text/patterns that must NOT appear                 | `pattern`, `regex`                              |
+| **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                            |
+| **Images**         | Image presence and format                          | `min`, `max`, `require_alt`, `formats`          |
+| **Tables**         | Table structure validation                         | `min`, `max`, `min_columns`, `required_headers` |
+| **Lists**          | List presence and type                             | `min`, `max`, `type`, `min_items`               |
+| **Word Count**     | Content length constraints                         | `min`, `max`                                    |
+
+### Global Rules (document-wide validation)
+
+#### Link Validation
+
+```yaml
+links:
+  validate_internal: true # Check anchor links (#section)
+  validate_files: true # Check relative file links (./file.md)
+  validate_external: false # Check external URLs (slower)
+  external_timeout: 10 # Timeout in seconds
+  allowed_domains: # Restrict to these domains
+    - github.com
+    - golang.org
+  blocked_domains: # Block these domains
+    - example.com
+```
+
+#### Heading Rules
+
+```yaml
+heading_rules:
+  no_skip_levels: true # Disallow h1 -> h3 without h2
+  unique: true # All headings must be unique
+  unique_per_level: false # Unique within same level only
+  max_depth: 4 # Maximum heading depth (h4)
+```
+
+#### Frontmatter Validation
+
+```yaml
+frontmatter:
+  optional: true # Set to make frontmatter optional (default: required)
+  fields:
+    - { name: "title", type: string } # required by default
+    - { name: "date", type: date, format: date } # required by default
+    - { name: "author", optional: true, format: email } # explicitly optional
+    - { name: "tags", optional: true, type: array }
+    - { name: "draft", optional: true, type: boolean }
+    - { name: "version", optional: true, type: number }
+    - { name: "repo", optional: true, format: url }
+```
+
+**Field types:** `string`, `number`, `boolean`, `array`, `date`
+**Field formats:** `date` (YYYY-MM-DD), `email`, `url`
 
 ## Use Cases
 
