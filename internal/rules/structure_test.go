@@ -336,6 +336,143 @@ func TestStructureRuleOrderMatchingSkipsEarlierHeadings(t *testing.T) {
 	}
 }
 
+func TestStructureRuleAllowAdditional(t *testing.T) {
+	p := parser.New()
+	// Document has an extra "## Notes" section under "# Title" that is not in schema
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n## Notes\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading:         schema.HeadingPattern{Pattern: "# Title"},
+				AllowAdditional: true, // Allow extra subsections
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should NOT report violation for "Notes" since parent allows additional
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Notes") {
+			t.Errorf("Should not report violation for extra section when AllowAdditional is true: %s", v.Message)
+		}
+	}
+}
+
+func TestStructureRuleAllowAdditionalFalse(t *testing.T) {
+	p := parser.New()
+	// Document has an extra "## Notes" section under "# Title" that is not in schema
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n## Notes\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading:         schema.HeadingPattern{Pattern: "# Title"},
+				AllowAdditional: false, // Do not allow extra subsections (default)
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should report violation for "Notes" since parent does not allow additional
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Notes") && strings.Contains(v.Message, "Unexpected") {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Error("Expected violation for extra section when AllowAdditional is false")
+	}
+}
+
+func TestStructureRuleAllowAdditionalNested(t *testing.T) {
+	p := parser.New()
+	// Nested structure with extra sections at different levels
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n### Details\n\n### Extra\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{Pattern: "# Title"},
+				Children: []schema.StructureElement{
+					{
+						Heading:         schema.HeadingPattern{Pattern: "## Overview"},
+						AllowAdditional: true, // Allow extra subsections under Overview
+						Children: []schema.StructureElement{
+							{Heading: schema.HeadingPattern{Pattern: "### Details"}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should NOT report violation for "Extra" since parent (Overview) allows additional
+	for _, v := range violations {
+		if strings.Contains(v.Message, "Extra") {
+			t.Errorf("Should not report violation for extra nested section when AllowAdditional is true: %s", v.Message)
+		}
+	}
+}
+
+func TestStructureRuleAllowAdditionalDeeplyNested(t *testing.T) {
+	p := parser.New()
+	// Extra section with its own children - all should be allowed
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Overview\n\n## Extra\n\n### Extra Child\n\n#### Extra Grandchild\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading:         schema.HeadingPattern{Pattern: "# Title"},
+				AllowAdditional: true, // Allow extra subsections
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s)
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// Should NOT report any violations - Extra, Extra Child, and Extra Grandchild are all allowed
+	if len(violations) > 0 {
+		t.Errorf("Should not report violations for descendants of allowed extra sections: %+v", violations)
+	}
+}
+
 func TestStructureRuleSeverityLevels(t *testing.T) {
 	tests := []struct {
 		name             string

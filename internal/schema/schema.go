@@ -52,6 +52,9 @@ type StructureElement struct {
 	// Severity level for violations (error, warning, info). Default: error
 	Severity string `yaml:"severity,omitempty" lc:"violation severity: error, warning, or info"`
 
+	// AllowAdditional permits extra subsections not defined in children
+	AllowAdditional bool `yaml:"allow_additional,omitempty" lc:"allow extra subsections not in schema"`
+
 	// Hierarchical children elements
 	Children []StructureElement `yaml:"children,omitempty" lc:"nested subsections"`
 

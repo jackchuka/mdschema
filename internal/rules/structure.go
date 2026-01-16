@@ -147,6 +147,12 @@ func (r *StructureRule) validateUnmatchedSections(ctx *vast.Context) []Violation
 		if section == nil || section.Heading == nil {
 			continue
 		}
+
+		// Check if parent allows additional sections
+		if r.ancestorAllowsAdditional(ctx, section) {
+			continue
+		}
+
 		heading := strings.Repeat("#", section.Heading.Level) + " " + section.Heading.Text
 		parent := "document root"
 		if section.Parent != nil && section.Parent.Heading != nil {
@@ -157,6 +163,37 @@ func (r *StructureRule) validateUnmatchedSections(ctx *vast.Context) []Violation
 	}
 
 	return violations
+}
+
+// ancestorAllowsAdditional recursively checks if any ancestor allows additional sections.
+func (r *StructureRule) ancestorAllowsAdditional(ctx *vast.Context, section *parser.Section) bool {
+	if section == nil {
+		return false
+	}
+
+	// Root level - no heading means document root
+	if section.Heading == nil {
+		return false
+	}
+
+	// Check if this section is bound to a schema element
+	var node *vast.Node
+	ctx.Tree.Walk(func(n *vast.Node) bool {
+		if n.Section == section {
+			node = n
+			return false // stop walking
+		}
+		return true
+	})
+
+	if node != nil {
+		// This section is bound to a schema element
+		return node.Element.AllowAdditional
+	}
+
+	// This section is unmatched - check if its parent allows additional
+	// If so, this section and all its descendants are allowed
+	return r.ancestorAllowsAdditional(ctx, section.Parent)
 }
 
 func (r *StructureRule) validateOrderingIssues(ctx *vast.Context) []Violation {

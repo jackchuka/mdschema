@@ -96,6 +96,7 @@ structure:
 
 - **`heading`** - Heading pattern (string for literal, or `{pattern: "...", regex: true}` for regex)
 - **`optional`** - Whether the section is optional (default: false)
+- **`allow_additional`** - Allow extra subsections not defined in schema (default: false)
 - **`children`** - Nested subsections that must appear within this section
 
 #### Section Rules (apply to each section)
@@ -208,6 +209,20 @@ structure:
         optional: true
 ```
 
+### Flexible Documentation Schema (allow additional sections)
+
+```yaml
+structure:
+  - heading: "# Project Name"
+    allow_additional: true # Allow extra subsections not defined in schema
+    children:
+      - heading: "## Overview"
+      - heading: "## Installation"
+        code_blocks:
+          - { lang: bash, min: 1 }
+      # Users can add any other sections like "## FAQ", "## Troubleshooting", etc.
+```
+
 ### Blog Post Schema (comprehensive example)
 
 ```yaml
@@ -254,9 +269,9 @@ mdschema includes comprehensive validation rules organized into three categories
 
 ### Section Rules (per-section validation)
 
-| Rule               | Description                                        | Options                                         |
-| ------------------ | -------------------------------------------------- | ----------------------------------------------- |
-| **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `children`               |
+| Rule               | Description                                        | Options                                              |
+| ------------------ | -------------------------------------------------- | ---------------------------------------------------- |
+| **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `allow_additional`, `children`|
 | **Required Text**  | Text/patterns that must appear                     | `pattern`, `regex`                              |
 | **Forbidden Text** | Text/patterns that must NOT appear                 | `pattern`, `regex`                              |
 | **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                            |
