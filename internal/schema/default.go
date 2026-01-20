@@ -6,7 +6,8 @@ import (
 	yamlcomment "github.com/zijiren233/yaml-comment"
 )
 
-const schemaPreamble = `# Markdown Schema Configuration
+const schemaPreamble = `# yaml-language-server: $schema=https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json
+# Markdown Schema Configuration
 # This file demonstrates all available schema capabilities.
 # See: https://github.com/jackchuka/mdschema for documentation
 

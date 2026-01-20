@@ -39,3 +39,8 @@ jobs:
 
       - name: Run tests
         run: go test -v ./...
+
+      - name: Check schema.json is up to date
+        run: |
+          go run ./cmd/mdschema schema -o schema.json.tmp
+          diff schema.json schema.json.tmp || (echo "schema.json is out of sync. Run 'go run ./cmd/mdschema schema -o schema.json' and commit." && exit 1)
