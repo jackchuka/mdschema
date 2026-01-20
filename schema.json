@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json",
+  "$ref": "#/$defs/Schema",
+  "$defs": {
+    "CodeBlockRule": {
+      "properties": {
+        "lang": {
+          "type": "string",
+          "description": "Language identifier (bash, go, python, etc.)"
+        },
+        "min": {
+          "type": "integer",
+          "description": "Minimum required blocks"
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum allowed blocks"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "lang"
+      ]
+    },
+    "FieldFormat": {
+      "type": "string",
+      "enum": [
+        "date",
+        "email",
+        "url"
+      ],
+      "description": "Field format: date (YYYY-MM-DD), email, or url"
+    },
+    "FieldType": {
+      "type": "string",
+      "enum": [
+        "string",
+        "number",
+        "boolean",
+        "array",
+        "date"
+      ],
+      "description": "Field type: string, number, boolean, array, or date"
+    },
+    "FrontmatterConfig": {
+      "properties": {
+        "optional": {
+          "type": "boolean",
+          "description": "Frontmatter block is not required"
+        },
+        "fields": {
+          "items": {
+            "$ref": "#/$defs/FrontmatterField"
+          },
+          "type": "array",
+          "description": "Field definitions"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "FrontmatterField": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Field name"
+        },
+        "optional": {
+          "type": "boolean",
+          "description": "Field is not required"
+        },
+        "type": {
+          "$ref": "#/$defs/FieldType",
+          "description": "String, number, boolean, array, date"
+        },
+        "format": {
+          "$ref": "#/$defs/FieldFormat",
+          "description": "Date, email, or url"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name"
+      ]
+    },
+    "HeadingRules": {
+      "properties": {
+        "no_skip_levels": {
+          "type": "boolean",
+          "description": "Disallow skipping levels (e.g., h1 -\u003e h3)"
+        },
+        "unique": {
+          "type": "boolean",
+          "description": "All headings must be unique"
+        },
+        "unique_per_level": {
+          "type": "boolean",
+          "description": "Headings unique within same level"
+        },
+        "max_depth": {
+          "type": "integer",
+          "description": "Maximum heading depth (1-6)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ImageRule": {
+      "properties": {
+        "min": {
+          "type": "integer",
+          "description": "Minimum required images"
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum allowed images"
+        },
+        "require_alt": {
+          "type": "boolean",
+          "description": "Require alt text"
+        },
+        "formats": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Allowed formats (png, jpg, gif, etc.)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "LinkRule": {
+      "properties": {
+        "validate_internal": {
+          "type": "boolean",
+          "description": "Check anchor links (#section-name)"
+        },
+        "validate_files": {
+          "type": "boolean",
+          "description": "Check relative file links (./other.md)"
+        },
+        "validate_external": {
+          "type": "boolean",
+          "description": "Check external URLs (http/https)"
+        },
+        "external_timeout": {
+          "type": "integer",
+          "description": "Timeout in seconds for external URL checks"
+        },
+        "allowed_domains": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Restrict external links to these domains"
+        },
+        "blocked_domains": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Block links to these domains"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "ListRule": {
+      "properties": {
+        "min": {
+          "type": "integer",
+          "description": "Minimum required lists"
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum allowed lists"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "ordered",
+            "unordered"
+          ],
+          "description": "Ordered, unordered, or empty for any"
+        },
+        "min_items": {
+          "type": "integer",
+          "description": "Minimum items per list"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Schema": {
+      "properties": {
+        "structure": {
+          "items": {
+            "$ref": "#/$defs/StructureElement"
+          },
+          "type": "array",
+          "description": "Document structure defines required/optional sections and their validation rules"
+        },
+        "links": {
+          "$ref": "#/$defs/LinkRule",
+          "description": "Global link validation settings"
+        },
+        "heading_rules": {
+          "$ref": "#/$defs/HeadingRules",
+          "description": "Global heading validation rules"
+        },
+        "frontmatter": {
+          "$ref": "#/$defs/FrontmatterConfig",
+          "description": "YAML frontmatter validation"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "StructureElement": {
+      "oneOf": [
+        {
+          "type": "string",
+          "description": "Simple heading text (shorthand for {heading: '...'})"
+        },
+        {
+          "properties": {
+            "heading": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Simple heading text (e.g., '## Features')"
+                },
+                {
+                  "properties": {
+                    "pattern": {
+                      "type": "string",
+                      "description": "Heading text or regex pattern"
+                    },
+                    "regex": {
+                      "type": "boolean",
+                      "description": "Treat pattern as regular expression"
+                    }
+                  },
+                  "type": "object",
+                  "description": "Heading pattern with optional regex support"
+                }
+              ],
+              "description": "Heading pattern to match"
+            },
+            "optional": {
+              "type": "boolean",
+              "description": "Section is not required"
+            },
+            "severity": {
+              "type": "string",
+              "enum": [
+                "error",
+                "warning",
+                "info"
+              ],
+              "description": "Violation severity: error, warning, or info"
+            },
+            "allow_additional": {
+              "type": "boolean",
+              "description": "Allow extra subsections not in schema"
+            },
+            "children": {
+              "items": {
+                "$ref": "#/$defs/StructureElement"
+              },
+              "type": "array",
+              "description": "Nested subsections"
+            },
+            "required_text": {
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "Simple text to match"
+                  },
+                  {
+                    "properties": {
+                      "pattern": {
+                        "type": "string",
+                        "description": "Text or regex to match"
+                      },
+                      "regex": {
+                        "type": "boolean",
+                        "description": "Treat as regex"
+                      }
+                    },
+                    "type": "object",
+                    "description": "Pattern with optional regex support"
+                  }
+                ]
+              },
+              "type": "array",
+              "description": "Text that must appear in this section"
+            },
+            "forbidden_text": {
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "Simple text that must not appear"
+                  },
+                  {
+                    "properties": {
+                      "pattern": {
+                        "type": "string",
+                        "description": "Text or regex that must NOT appear"
+                      },
+                      "regex": {
+                        "type": "boolean",
+                        "description": "Treat as regex"
+                      }
+                    },
+                    "type": "object",
+                    "description": "Pattern with optional regex support"
+                  }
+                ]
+              },
+              "type": "array",
+              "description": "Text that must NOT appear"
+            },
+            "code_blocks": {
+              "items": {
+                "$ref": "#/$defs/CodeBlockRule"
+              },
+              "type": "array",
+              "description": "Code block requirements"
+            },
+            "images": {
+              "items": {
+                "$ref": "#/$defs/ImageRule"
+              },
+              "type": "array",
+              "description": "Image requirements"
+            },
+            "tables": {
+              "items": {
+                "$ref": "#/$defs/TableRule"
+              },
+              "type": "array",
+              "description": "Table requirements"
+            },
+            "lists": {
+              "items": {
+                "$ref": "#/$defs/ListRule"
+              },
+              "type": "array",
+              "description": "List requirements"
+            },
+            "word_count": {
+              "$ref": "#/$defs/WordCountRule",
+              "description": "Word count constraints"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "description": "Structure element with heading pattern and validation rules"
+        }
+      ],
+      "description": "Document structure element"
+    },
+    "TableRule": {
+      "properties": {
+        "min": {
+          "type": "integer",
+          "description": "Minimum required tables"
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum allowed tables"
+        },
+        "min_columns": {
+          "type": "integer",
+          "description": "Minimum columns per table"
+        },
+        "required_headers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Headers that must exist"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WordCountRule": {
+      "properties": {
+        "min": {
+          "type": "integer",
+          "description": "Minimum words"
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum words"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  },
+  "title": "mdschema",
+  "description": "Schema for mdschema YAML configuration files (.mdschema.yml)"
+}
