@@ -42,7 +42,7 @@ func TestWordCountRuleTooFew(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewWordCountRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -82,7 +82,7 @@ func TestWordCountRuleTooMany(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewWordCountRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -122,7 +122,7 @@ func TestWordCountRuleSufficient(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewWordCountRule()
 	violations := rule.ValidateWithContext(ctx)
 

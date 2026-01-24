@@ -44,7 +44,7 @@ func TestTableRuleMinimum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewTableRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -86,7 +86,7 @@ func TestTableRuleMaximum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewTableRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -128,7 +128,7 @@ func TestTableRuleMinColumns(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewTableRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -170,7 +170,7 @@ func TestTableRuleRequiredHeaders(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewTableRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -212,7 +212,7 @@ func TestTableRuleSufficient(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewTableRule()
 	violations := rule.ValidateWithContext(ctx)
 

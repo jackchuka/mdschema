@@ -133,60 +133,6 @@ func TestLoadNonexistentFile(t *testing.T) {
 	}
 }
 
-func TestLoadMultipleSchemas(t *testing.T) {
-	tmpDir := t.TempDir()
-	schema1 := filepath.Join(tmpDir, "schema1.yml")
-	schema2 := filepath.Join(tmpDir, "schema2.yml")
-
-	content1 := []byte(`structure:
-  - heading: "# First"
-`)
-	content2 := []byte(`structure:
-  - heading: "# Second"
-`)
-
-	if err := os.WriteFile(schema1, content1, 0o644); err != nil {
-		t.Fatalf("failed to create test file: %v", err)
-	}
-	if err := os.WriteFile(schema2, content2, 0o644); err != nil {
-		t.Fatalf("failed to create test file: %v", err)
-	}
-
-	schemas, err := LoadMultiple([]string{schema1, schema2})
-	if err != nil {
-		t.Fatalf("LoadMultiple() error: %v", err)
-	}
-
-	if len(schemas) != 2 {
-		t.Fatalf("expected 2 schemas, got %d", len(schemas))
-	}
-
-	if schemas[0].Structure[0].Heading.Pattern != "# First" {
-		t.Errorf("schemas[0].Structure[0].Heading.Pattern = %q, want %q", schemas[0].Structure[0].Heading.Pattern, "# First")
-	}
-
-	if schemas[1].Structure[0].Heading.Pattern != "# Second" {
-		t.Errorf("schemas[1].Structure[0].Heading.Pattern = %q, want %q", schemas[1].Structure[0].Heading.Pattern, "# Second")
-	}
-}
-
-func TestLoadMultipleSchemasWithError(t *testing.T) {
-	tmpDir := t.TempDir()
-	validSchema := filepath.Join(tmpDir, "valid.yml")
-
-	content := []byte(`structure:
-  - heading: "# Title"
-`)
-	if err := os.WriteFile(validSchema, content, 0o644); err != nil {
-		t.Fatalf("failed to create test file: %v", err)
-	}
-
-	_, err := LoadMultiple([]string{validSchema, "/nonexistent/schema.yml"})
-	if err == nil {
-		t.Error("LoadMultiple() should return error when one schema fails to load")
-	}
-}
-
 func TestFindSchemaInCurrentDir(t *testing.T) {
 	tmpDir := t.TempDir()
 	schemaFile := filepath.Join(tmpDir, ".mdschema.yml")

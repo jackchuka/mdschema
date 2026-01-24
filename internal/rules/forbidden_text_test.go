@@ -44,7 +44,7 @@ func TestForbiddenTextRuleViolation(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewForbiddenTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -86,7 +86,7 @@ func TestForbiddenTextRuleRegex(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewForbiddenTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -117,7 +117,7 @@ func TestForbiddenTextRuleNoViolation(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewForbiddenTextRule()
 	violations := rule.ValidateWithContext(ctx)
 

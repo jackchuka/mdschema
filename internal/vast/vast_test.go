@@ -20,7 +20,7 @@ func TestBuilderBasic(t *testing.T) {
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	if ctx.Tree == nil {
 		t.Fatal("Tree should not be nil")
@@ -80,7 +80,7 @@ Linux install
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	// Should have 1 root node (# Project)
 	if len(ctx.Tree.Roots) != 1 {
@@ -166,7 +166,7 @@ func TestBuilderUnboundNodes(t *testing.T) {
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	root := ctx.Tree.Roots[0]
 
@@ -208,7 +208,7 @@ MIT
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	// Should have 2 roots
 	if len(ctx.Tree.Roots) != 2 {
@@ -246,7 +246,7 @@ func TestTreeWalk(t *testing.T) {
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	count := 0
 	ctx.Tree.Walk(func(n *Node) bool {
@@ -277,7 +277,7 @@ func TestTreeWalkBound(t *testing.T) {
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	boundCount := 0
 	ctx.Tree.WalkBound(func(n *Node) bool {
@@ -303,7 +303,7 @@ func TestNodeAccessors(t *testing.T) {
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 	root := ctx.Tree.Roots[0]
 
 	// Test Content()
@@ -342,7 +342,7 @@ func TestRegexFlagRequired(t *testing.T) {
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	if len(ctx.Tree.Roots) != 1 {
 		t.Fatalf("Expected 1 root, got %d", len(ctx.Tree.Roots))
@@ -373,7 +373,7 @@ func TestUnboundNodeAccessors(t *testing.T) {
 		},
 	}
 
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 	missingNode := ctx.Tree.Roots[0].Children[0]
 
 	// Unbound node should return empty/nil for accessors

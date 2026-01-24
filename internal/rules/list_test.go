@@ -44,7 +44,7 @@ func TestListRuleMinimum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewListRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -87,7 +87,7 @@ func TestListRuleMaximum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewListRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -129,7 +129,7 @@ func TestListRuleTypeOrdered(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewListRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -171,7 +171,7 @@ func TestListRuleTypeUnordered(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewListRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -201,7 +201,7 @@ func TestListRuleSufficient(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewListRule()
 	violations := rule.ValidateWithContext(ctx)
 

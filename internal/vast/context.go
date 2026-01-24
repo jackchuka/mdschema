@@ -15,17 +15,24 @@ type Context struct {
 	// Schema reference (Tree.Document provides document access)
 	Schema *schema.Schema
 
+	// RootDir is the root directory for resolving absolute paths (e.g., /path links).
+	// Typically the directory containing .mdschema.yml.
+	RootDir string
+
 	// Pre-computed indexes for fast lookups
 	slugIndex map[string]*parser.Section // For internal link validation
 }
 
 // NewContext creates a new validation context with VAST.
-func NewContext(doc *parser.Document, s *schema.Schema) *Context {
+// The rootDir is used for resolving absolute paths (e.g., /path links).
+// Pass "" when no root directory is needed.
+func NewContext(doc *parser.Document, s *schema.Schema, rootDir string) *Context {
 	builder := NewBuilder()
 
 	ctx := &Context{
 		Tree:      builder.Build(doc, s),
 		Schema:    s,
+		RootDir:   rootDir,
 		slugIndex: make(map[string]*parser.Section),
 	}
 

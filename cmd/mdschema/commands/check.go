@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/reporter"
@@ -28,10 +29,10 @@ func NewCheckCmd() *cobra.Command {
 }
 
 func runCheck(cfg *Config, globs []string) error {
-	// Load schemas
-	schemas, err := loadSchemas(cfg)
+	// Load schema
+	s, schemaPath, err := loadSchema(cfg)
 	if err != nil {
-		return fmt.Errorf("loading schemas: %w", err)
+		return fmt.Errorf("loading schema: %w", err)
 	}
 
 	// Find matching files
@@ -45,6 +46,9 @@ func runCheck(cfg *Config, globs []string) error {
 		return nil
 	}
 
+	// Determine root directory for resolving absolute paths (e.g., /path links)
+	rootDir := filepath.Dir(schemaPath)
+
 	// Parse and validate files
 	mdParser := parser.New()
 	validator := rules.NewValidator()
@@ -56,15 +60,12 @@ func runCheck(cfg *Config, globs []string) error {
 			return fmt.Errorf("parsing %s: %w", file, err)
 		}
 
-		// Validate against all schemas
-		for _, s := range schemas {
-			violations := validator.Validate(doc, s)
-			// Set file path for each violation
-			for i := range violations {
-				violations[i] = violations[i].WithPath(file)
-			}
-			allViolations = append(allViolations, violations...)
+		violations := validator.Validate(doc, s, rootDir)
+		// Set file path for each violation
+		for i := range violations {
+			violations[i] = violations[i].WithPath(file)
 		}
+		allViolations = append(allViolations, violations...)
 	}
 
 	// Report violations

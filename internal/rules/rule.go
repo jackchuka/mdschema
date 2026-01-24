@@ -76,12 +76,13 @@ func NewValidator() *Validator {
 	}
 }
 
-// Validate runs all rules against a document
-func (v *Validator) Validate(doc *parser.Document, s *schema.Schema) []Violation {
+// Validate runs all rules against a document with a specified root directory.
+// The rootDir is used for resolving absolute paths (e.g., /path links).
+func (v *Validator) Validate(doc *parser.Document, s *schema.Schema, rootDir string) []Violation {
 	violations := make([]Violation, 0)
 
 	// Create validation context with VAST
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, rootDir)
 
 	for _, rule := range v.rules {
 		ruleViolations := rule.ValidateWithContext(ctx)

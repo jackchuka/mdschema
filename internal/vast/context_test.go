@@ -26,7 +26,7 @@ Third section
 	}
 
 	s := &schema.Schema{}
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	// First occurrence should be at "title"
 	if !ctx.HasSlug("title") {
@@ -64,7 +64,7 @@ func TestSlugCollisionWithLiteralSuffix(t *testing.T) {
 	}
 
 	s := &schema.Schema{}
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	// First "Title" → "title"
 	if !ctx.HasSlug("title") {
@@ -99,7 +99,7 @@ func TestMixedDuplicateSlugs(t *testing.T) {
 	}
 
 	s := &schema.Schema{}
-	ctx := NewContext(doc, s)
+	ctx := NewContext(doc, s, "")
 
 	// Check all expected slugs exist
 	expectedSlugs := []string{

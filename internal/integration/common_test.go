@@ -39,7 +39,7 @@ func runTestCases(t *testing.T, testCases []TestCase) {
 
 			// Validate
 			validator := rules.NewValidator()
-			violations := validator.Validate(doc, s)
+			violations := validator.Validate(doc, s, "")
 
 			hasViolations := len(violations) > 0
 

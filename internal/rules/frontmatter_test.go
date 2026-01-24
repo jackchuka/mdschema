@@ -33,7 +33,7 @@ func TestFrontmatterRuleNoConfig(t *testing.T) {
 	// No frontmatter config
 	s := &schema.Schema{}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -56,7 +56,7 @@ func TestFrontmatterRuleRequiredMissing(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -91,7 +91,7 @@ func TestFrontmatterRuleRequiredPresent(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -117,7 +117,7 @@ func TestFrontmatterRuleRequiredFieldMissing(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -155,7 +155,7 @@ func TestFrontmatterRuleAllFieldsPresent(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -180,7 +180,7 @@ func TestFrontmatterRuleTypeValidation(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -217,7 +217,7 @@ func TestFrontmatterRuleDateFormat(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -253,7 +253,7 @@ func TestFrontmatterRuleValidDateFormat(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -277,7 +277,7 @@ func TestFrontmatterRuleArrayType(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -303,7 +303,7 @@ func TestFrontmatterRuleOptionalField(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewFrontmatterRule()
 	violations := rule.ValidateWithContext(ctx)
 

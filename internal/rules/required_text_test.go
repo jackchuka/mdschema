@@ -41,7 +41,7 @@ func TestRequiredTextExactMatch(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -71,7 +71,7 @@ func TestRequiredTextMissing(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -113,7 +113,7 @@ func TestRequiredTextRegexMatch(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -145,7 +145,7 @@ func TestRequiredTextRegexNoMatch(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -174,7 +174,7 @@ func TestRequiredTextCaseInsensitive(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewRequiredTextRule()
 	violations := rule.ValidateWithContext(ctx)
 

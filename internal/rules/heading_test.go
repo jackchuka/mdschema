@@ -33,7 +33,7 @@ func TestHeadingRuleNoRulesConfigured(t *testing.T) {
 	// No heading rules configured
 	s := &schema.Schema{}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -56,7 +56,7 @@ func TestHeadingRuleNoSkipLevels(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -91,7 +91,7 @@ func TestHeadingRuleNoSkipLevelsValid(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -114,7 +114,7 @@ func TestHeadingRuleNoSkipLevelsDecreasing(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -137,7 +137,7 @@ func TestHeadingRuleUniqueHeadings(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -172,7 +172,7 @@ func TestHeadingRuleUniqueHeadingsValid(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -195,7 +195,7 @@ func TestHeadingRuleUniquePerLevel(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -218,7 +218,7 @@ func TestHeadingRuleUniquePerLevelDifferentLevels(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -241,7 +241,7 @@ func TestHeadingRuleMaxDepth(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -276,7 +276,7 @@ func TestHeadingRuleMaxDepthValid(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -301,7 +301,7 @@ func TestHeadingRuleCombinedRules(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewHeadingRule()
 	violations := rule.ValidateWithContext(ctx)
 
