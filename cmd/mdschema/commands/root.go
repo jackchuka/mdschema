@@ -14,7 +14,7 @@ type configKey struct{}
 
 // Config holds CLI configuration options
 type Config struct {
-	SchemaFiles  []string
+	SchemaFile   string
 	OutputFormat string
 }
 
@@ -44,7 +44,7 @@ using declarative schemas to maintain consistent documentation across projects.`
 	}
 
 	// Global flags bound to config
-	cmd.PersistentFlags().StringSliceVar(&cfg.SchemaFiles, "schema", []string{}, "Schema file(s) to use")
+	cmd.PersistentFlags().StringVar(&cfg.SchemaFile, "schema", "", "Schema file to use")
 	cmd.PersistentFlags().StringVar(&cfg.OutputFormat, "format", "text", "Output format: text")
 
 	// Add subcommands

@@ -44,15 +44,11 @@ func runGenerate(cfg *Config, schemaFile, outputFile string) error {
 			return fmt.Errorf("loading schema from %s: %w", schemaFile, err)
 		}
 	} else {
-		// Load schemas using existing utility
-		schemasWithPaths, err := loadSchemas(cfg)
+		// Load schema using existing utility
+		s, _, err = loadSchema(cfg)
 		if err != nil {
-			return fmt.Errorf("loading schemas: %w", err)
+			return fmt.Errorf("loading schema: %w", err)
 		}
-		if len(schemasWithPaths) == 0 {
-			return fmt.Errorf("no schemas found")
-		}
-		s = schemasWithPaths[0].schema // Use first schema
 	}
 
 	// Generate markdown content using the generator package

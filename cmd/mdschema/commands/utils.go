@@ -8,38 +8,28 @@ import (
 	"github.com/jackchuka/mdschema/internal/schema"
 )
 
-// schemaWithPath pairs a schema with its source path
-type schemaWithPath struct {
-	schema *schema.Schema
-	path   string
-}
-
-// loadSchemas loads schemas based on config or discovery
-func loadSchemas(cfg *Config) ([]schemaWithPath, error) {
-	if len(cfg.SchemaFiles) > 0 {
-		// Load explicitly specified schemas
-		result := make([]schemaWithPath, 0, len(cfg.SchemaFiles))
-		for _, path := range cfg.SchemaFiles {
-			loaded, err := schema.Load(path)
-			if err != nil {
-				return nil, fmt.Errorf("loading schema %s: %w", path, err)
-			}
-			result = append(result, schemaWithPath{schema: loaded, path: path})
+// loadSchema loads a schema based on config or discovery
+func loadSchema(cfg *Config) (*schema.Schema, string, error) {
+	if cfg.SchemaFile != "" {
+		// Load explicitly specified schema
+		loaded, err := schema.Load(cfg.SchemaFile)
+		if err != nil {
+			return nil, "", fmt.Errorf("loading schema %s: %w", cfg.SchemaFile, err)
 		}
-		return result, nil
+		return loaded, cfg.SchemaFile, nil
 	}
 
 	// Try to discover schema in current directory
 	schemaPath, err := schema.FindSchema(".")
 	if err != nil {
-		return nil, fmt.Errorf("finding schema: %w", err)
+		return nil, "", fmt.Errorf("finding schema: %w", err)
 	}
 
 	loaded, err := schema.Load(schemaPath)
 	if err != nil {
-		return nil, fmt.Errorf("loading discovered schema: %w", err)
+		return nil, "", fmt.Errorf("loading discovered schema: %w", err)
 	}
-	return []schemaWithPath{{schema: loaded, path: schemaPath}}, nil
+	return loaded, schemaPath, nil
 }
 
 const (

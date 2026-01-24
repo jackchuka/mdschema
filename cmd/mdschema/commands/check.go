@@ -29,10 +29,10 @@ func NewCheckCmd() *cobra.Command {
 }
 
 func runCheck(cfg *Config, globs []string) error {
-	// Load schemas
-	schemasWithPaths, err := loadSchemas(cfg)
+	// Load schema
+	s, schemaPath, err := loadSchema(cfg)
 	if err != nil {
-		return fmt.Errorf("loading schemas: %w", err)
+		return fmt.Errorf("loading schema: %w", err)
 	}
 
 	// Find matching files
@@ -47,11 +47,7 @@ func runCheck(cfg *Config, globs []string) error {
 	}
 
 	// Determine root directory for resolving absolute paths (e.g., /path links)
-	// Use first schema's directory as the canonical root for consistency
-	rootDir := ""
-	if len(schemasWithPaths) > 0 {
-		rootDir = filepath.Dir(schemasWithPaths[0].path)
-	}
+	rootDir := filepath.Dir(schemaPath)
 
 	// Parse and validate files
 	mdParser := parser.New()
@@ -64,15 +60,12 @@ func runCheck(cfg *Config, globs []string) error {
 			return fmt.Errorf("parsing %s: %w", file, err)
 		}
 
-		// Validate against all schemas using consistent rootDir
-		for _, sp := range schemasWithPaths {
-			violations := validator.Validate(doc, sp.schema, rootDir)
-			// Set file path for each violation
-			for i := range violations {
-				violations[i] = violations[i].WithPath(file)
-			}
-			allViolations = append(allViolations, violations...)
+		violations := validator.Validate(doc, s, rootDir)
+		// Set file path for each violation
+		for i := range violations {
+			violations[i] = violations[i].WithPath(file)
 		}
+		allViolations = append(allViolations, violations...)
 	}
 
 	// Report violations
