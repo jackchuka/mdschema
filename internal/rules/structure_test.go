@@ -41,7 +41,7 @@ func TestStructureRuleValidMappings(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -67,7 +67,7 @@ func TestStructureRuleMissingRequired(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -102,7 +102,7 @@ func TestStructureRuleOptionalMissing(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -130,7 +130,7 @@ func TestStructureRuleWrongOrder(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -189,7 +189,7 @@ func TestStructureRuleUnmatchedHeading(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 	if len(violations) == 0 {
@@ -233,7 +233,7 @@ func TestStructureRuleRegexMatchesLicenseHeading(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	matches := ctx.Tree.GetByElement("# [A-Za-z0-9][A-Za-z0-9 _-]*")
 	if len(matches) != 1 {
 		t.Fatalf("Expected regex heading to match 1 root, got %d", len(matches))
@@ -274,7 +274,7 @@ func TestStructureRuleRootFirstMismatch(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 	if len(violations) == 0 {
@@ -315,7 +315,7 @@ func TestStructureRuleOrderMatchingSkipsEarlierHeadings(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 	if len(violations) == 0 {
@@ -356,7 +356,7 @@ func TestStructureRuleAllowAdditional(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -388,7 +388,7 @@ func TestStructureRuleAllowAdditionalFalse(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -431,7 +431,7 @@ func TestStructureRuleAllowAdditionalNested(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -463,7 +463,7 @@ func TestStructureRuleAllowAdditionalDeeplyNested(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewStructureRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -524,7 +524,7 @@ func TestStructureRuleSeverityLevels(t *testing.T) {
 				},
 			}
 
-			ctx := vast.NewContext(doc, s)
+			ctx := vast.NewContext(doc, s, "")
 			rule := NewStructureRule()
 			violations := rule.ValidateWithContext(ctx)
 

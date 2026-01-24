@@ -24,13 +24,9 @@ type Context struct {
 }
 
 // NewContext creates a new validation context with VAST.
-func NewContext(doc *parser.Document, s *schema.Schema) *Context {
-	return NewContextWithRoot(doc, s, "")
-}
-
-// NewContextWithRoot creates a new validation context with VAST and a root directory.
 // The rootDir is used for resolving absolute paths (e.g., /path links).
-func NewContextWithRoot(doc *parser.Document, s *schema.Schema, rootDir string) *Context {
+// Pass "" when no root directory is needed.
+func NewContext(doc *parser.Document, s *schema.Schema, rootDir string) *Context {
 	builder := NewBuilder()
 
 	ctx := &Context{

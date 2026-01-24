@@ -82,7 +82,7 @@ func (v *Validator) Validate(doc *parser.Document, s *schema.Schema, rootDir str
 	violations := make([]Violation, 0)
 
 	// Create validation context with VAST
-	ctx := vast.NewContextWithRoot(doc, s, rootDir)
+	ctx := vast.NewContext(doc, s, rootDir)
 
 	for _, rule := range v.rules {
 		ruleViolations := rule.ValidateWithContext(ctx)

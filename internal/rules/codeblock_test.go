@@ -44,7 +44,7 @@ func TestCodeBlockRuleMinimum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -86,7 +86,7 @@ func TestCodeBlockRuleMaximum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -129,7 +129,7 @@ func TestCodeBlockRuleLanguageSpecific(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -152,7 +152,7 @@ func TestCodeBlockRuleNoRequirements(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -182,7 +182,7 @@ func TestCodeBlockRuleSufficient(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewCodeBlockRule()
 	violations := rule.ValidateWithContext(ctx)
 

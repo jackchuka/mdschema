@@ -39,7 +39,7 @@ func TestLinkValidationNoRulesConfigured(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -64,7 +64,7 @@ func TestLinkValidationValidAnchor(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -92,7 +92,7 @@ func TestLinkValidationBrokenAnchor(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -144,7 +144,7 @@ func TestLinkValidationValidFileLink(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -181,7 +181,7 @@ func TestLinkValidationBrokenFileLink(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -218,7 +218,7 @@ func TestLinkValidationBlockedDomain(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -255,7 +255,7 @@ func TestLinkValidationAllowedDomains(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -292,7 +292,7 @@ func TestLinkValidationAllowedDomainsPass(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -320,7 +320,7 @@ func TestLinkValidationSubdomainBlocked(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -360,7 +360,7 @@ func TestLinkValidationFileLinkWithAnchor(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -390,7 +390,7 @@ func TestLinkValidationInternalDisabled(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -442,7 +442,7 @@ func TestLinkValidationRootRelativePath(t *testing.T) {
 	}
 
 	// Create context with rootDir set to tmpDir (simulating schema location)
-	ctx := vast.NewContextWithRoot(doc, s, tmpDir)
+	ctx := vast.NewContext(doc, s, tmpDir)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -483,7 +483,7 @@ func TestLinkValidationRootRelativePathBroken(t *testing.T) {
 	}
 
 	// Create context with rootDir set to tmpDir
-	ctx := vast.NewContextWithRoot(doc, s, tmpDir)
+	ctx := vast.NewContext(doc, s, tmpDir)
 	rule := NewLinkValidationRule()
 	violations := rule.ValidateWithContext(ctx)
 

@@ -44,7 +44,7 @@ func TestImageRuleMinimum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewImageRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -86,7 +86,7 @@ func TestImageRuleMaximum(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewImageRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -128,7 +128,7 @@ func TestImageRuleRequireAlt(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewImageRule()
 	violations := rule.ValidateWithContext(ctx)
 
@@ -170,7 +170,7 @@ func TestImageRuleSufficient(t *testing.T) {
 		},
 	}
 
-	ctx := vast.NewContext(doc, s)
+	ctx := vast.NewContext(doc, s, "")
 	rule := NewImageRule()
 	violations := rule.ValidateWithContext(ctx)
 
