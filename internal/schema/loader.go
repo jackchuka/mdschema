@@ -28,19 +28,6 @@ func simpleLoadYAML(path string) (*Schema, error) {
 	return &schema, nil
 }
 
-// LoadMultiple loads multiple schemas
-func LoadMultiple(paths []string) ([]*Schema, error) {
-	schemas := make([]*Schema, 0, len(paths))
-	for _, path := range paths {
-		schema, err := Load(path)
-		if err != nil {
-			return nil, fmt.Errorf("loading schema %s: %w", path, err)
-		}
-		schemas = append(schemas, schema)
-	}
-	return schemas, nil
-}
-
 // FindSchema discovers schema files in the directory hierarchy
 func FindSchema(startPath string) (string, error) {
 	dir := startPath

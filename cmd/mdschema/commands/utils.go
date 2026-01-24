@@ -8,16 +8,25 @@ import (
 	"github.com/jackchuka/mdschema/internal/schema"
 )
 
+// schemaWithPath pairs a schema with its source path
+type schemaWithPath struct {
+	schema *schema.Schema
+	path   string
+}
+
 // loadSchemas loads schemas based on config or discovery
-func loadSchemas(cfg *Config) ([]*schema.Schema, error) {
+func loadSchemas(cfg *Config) ([]schemaWithPath, error) {
 	if len(cfg.SchemaFiles) > 0 {
 		// Load explicitly specified schemas
-		loaded, err := schema.LoadMultiple(cfg.SchemaFiles)
-		if err != nil {
-			return nil, err
+		result := make([]schemaWithPath, 0, len(cfg.SchemaFiles))
+		for _, path := range cfg.SchemaFiles {
+			loaded, err := schema.Load(path)
+			if err != nil {
+				return nil, fmt.Errorf("loading schema %s: %w", path, err)
+			}
+			result = append(result, schemaWithPath{schema: loaded, path: path})
 		}
-
-		return loaded, nil
+		return result, nil
 	}
 
 	// Try to discover schema in current directory
@@ -30,7 +39,7 @@ func loadSchemas(cfg *Config) ([]*schema.Schema, error) {
 	if err != nil {
 		return nil, fmt.Errorf("loading discovered schema: %w", err)
 	}
-	return []*schema.Schema{loaded}, nil
+	return []schemaWithPath{{schema: loaded, path: schemaPath}}, nil
 }
 
 const (

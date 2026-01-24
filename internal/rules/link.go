@@ -92,7 +92,7 @@ func (r *LinkValidationRule) validateLink(link *parser.Link, rule *schema.LinkRu
 
 	// File links (relative paths)
 	if rule.ValidateFiles {
-		violations = append(violations, r.validateFileLink(link, docDir)...)
+		violations = append(violations, r.validateFileLink(link, docDir, ctx.RootDir)...)
 	}
 
 	return violations
@@ -181,7 +181,7 @@ func (r *LinkValidationRule) validateExternalLink(link *parser.Link, rule *schem
 }
 
 // validateFileLink validates a relative file path link
-func (r *LinkValidationRule) validateFileLink(link *parser.Link, docDir string) []Violation {
+func (r *LinkValidationRule) validateFileLink(link *parser.Link, docDir string, rootDir string) []Violation {
 	violations := make([]Violation, 0)
 
 	// Parse URL to handle anchors in file links (e.g., ./other.md#section)
@@ -195,8 +195,17 @@ func (r *LinkValidationRule) validateFileLink(link *parser.Link, docDir string) 
 		return violations
 	}
 
-	// Resolve relative path
-	targetPath := filepath.Join(docDir, linkURL)
+	// Determine base directory for path resolution
+	// Paths starting with "/" are resolved relative to rootDir (typically schema directory)
+	// Other paths are resolved relative to the document's directory
+	var targetPath string
+	if strings.HasPrefix(linkURL, "/") && rootDir != "" {
+		// Root-relative path: resolve from rootDir
+		targetPath = filepath.Join(rootDir, linkURL[1:]) // Strip leading "/"
+	} else {
+		// Document-relative path: resolve from document directory
+		targetPath = filepath.Join(docDir, linkURL)
+	}
 	targetPath = filepath.Clean(targetPath)
 
 	if _, err := os.Stat(targetPath); os.IsNotExist(err) {

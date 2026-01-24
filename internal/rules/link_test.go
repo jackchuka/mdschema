@@ -401,3 +401,105 @@ func TestLinkValidationInternalDisabled(t *testing.T) {
 		}
 	}
 }
+
+func TestLinkValidationRootRelativePath(t *testing.T) {
+	// Create directory structure:
+	// tmpDir/
+	//   depth1/folder1/  <- target directory at "root"
+	//   docs/
+	//     README.md        <- document with root-relative link
+	tmpDir := t.TempDir()
+
+	// Create target directory at root level
+	targetDir := filepath.Join(tmpDir, "depth1", "folder1")
+	if err := os.MkdirAll(targetDir, 0o755); err != nil {
+		t.Fatalf("Failed to create target directory: %v", err)
+	}
+
+	// Create docs directory
+	docsDir := filepath.Join(tmpDir, "docs")
+	if err := os.MkdirAll(docsDir, 0o755); err != nil {
+		t.Fatalf("Failed to create docs directory: %v", err)
+	}
+
+	// Create document with root-relative link (starts with /)
+	mainFile := filepath.Join(docsDir, "README.md")
+	content := []byte("# Title\n\n[folder1](/depth1/folder1/)\n")
+	if err := os.WriteFile(mainFile, content, 0o644); err != nil {
+		t.Fatalf("Failed to create main file: %v", err)
+	}
+
+	p := parser.New()
+	doc, err := p.ParseFile(mainFile)
+	if err != nil {
+		t.Fatalf("ParseFile() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			ValidateFiles: true,
+		},
+	}
+
+	// Create context with rootDir set to tmpDir (simulating schema location)
+	ctx := vast.NewContextWithRoot(doc, s, tmpDir)
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Expected no violations for valid root-relative link, got %d:", len(violations))
+		for _, v := range violations {
+			t.Logf("  - %s at line %d", v.Message, v.Line)
+		}
+	}
+}
+
+func TestLinkValidationRootRelativePathBroken(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create docs directory but NOT the target directory
+	docsDir := filepath.Join(tmpDir, "docs")
+	if err := os.MkdirAll(docsDir, 0o755); err != nil {
+		t.Fatalf("Failed to create docs directory: %v", err)
+	}
+
+	// Create document with root-relative link to non-existent directory
+	mainFile := filepath.Join(docsDir, "README.md")
+	content := []byte("# Title\n\n[folder1](/depth1/nonexistent/)\n")
+	if err := os.WriteFile(mainFile, content, 0o644); err != nil {
+		t.Fatalf("Failed to create main file: %v", err)
+	}
+
+	p := parser.New()
+	doc, err := p.ParseFile(mainFile)
+	if err != nil {
+		t.Fatalf("ParseFile() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			ValidateFiles: true,
+		},
+	}
+
+	// Create context with rootDir set to tmpDir
+	ctx := vast.NewContextWithRoot(doc, s, tmpDir)
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) == 0 {
+		t.Fatal("Expected violation for broken root-relative link, got none")
+	}
+
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "/depth1/nonexistent/") && strings.Contains(v.Message, "does not exist") {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Error("Expected violation mentioning broken root-relative link")
+	}
+}
