@@ -27,6 +27,12 @@ mdschema check README.md --schema ./examples/README-schema.yml
 
 ## Installation
 
+### Homebrew
+
+```bash
+brew install jackchuka/tap/mdschema
+```
+
 ### Go Install
 
 ```bash
@@ -269,16 +275,16 @@ mdschema includes comprehensive validation rules organized into three categories
 
 ### Section Rules (per-section validation)
 
-| Rule               | Description                                        | Options                                              |
-| ------------------ | -------------------------------------------------- | ---------------------------------------------------- |
-| **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `allow_additional`, `children`|
-| **Required Text**  | Text/patterns that must appear                     | `pattern`, `regex`                              |
-| **Forbidden Text** | Text/patterns that must NOT appear                 | `pattern`, `regex`                              |
-| **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                            |
-| **Images**         | Image presence and format                          | `min`, `max`, `require_alt`, `formats`          |
-| **Tables**         | Table structure validation                         | `min`, `max`, `min_columns`, `required_headers` |
-| **Lists**          | List presence and type                             | `min`, `max`, `type`, `min_items`               |
-| **Word Count**     | Content length constraints                         | `min`, `max`                                    |
+| Rule               | Description                                        | Options                                               |
+| ------------------ | -------------------------------------------------- | ----------------------------------------------------- |
+| **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `allow_additional`, `children` |
+| **Required Text**  | Text/patterns that must appear                     | `pattern`, `regex`                                    |
+| **Forbidden Text** | Text/patterns that must NOT appear                 | `pattern`, `regex`                                    |
+| **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                                  |
+| **Images**         | Image presence and format                          | `min`, `max`, `require_alt`, `formats`                |
+| **Tables**         | Table structure validation                         | `min`, `max`, `min_columns`, `required_headers`       |
+| **Lists**          | List presence and type                             | `min`, `max`, `type`, `min_items`                     |
+| **Word Count**     | Content length constraints                         | `min`, `max`                                          |
 
 ### Global Rules (document-wide validation)
 
