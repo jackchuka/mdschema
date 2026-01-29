@@ -256,11 +256,6 @@ func (r *StructureRule) checkSiblingOrder(siblings []*vast.Node, sections []*par
 
 // GenerateContent generates structural organization and ordering information
 func (r *StructureRule) GenerateContent(builder *strings.Builder, element schema.StructureElement) bool {
-	// Add structural comments for required vs optional elements
-	if !element.Optional {
-		builder.WriteString("<!-- Required section -->\n")
-	}
-
 	// If this element has children, add ordering guidance
 	if len(element.Children) > 0 {
 		builder.WriteString("<!-- This section should contain the following subsections in order: -->\n")

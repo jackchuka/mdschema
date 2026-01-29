@@ -80,6 +80,23 @@ func (r *CodeBlockRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	return violations
 }
 
+// commentForLang returns an appropriate TODO comment for the given language
+func commentForLang(lang string) string {
+	switch lang {
+	case "bash", "sh", "shell", "zsh", "yaml", "yml", "python", "py", "ruby", "rb", "perl", "r", "toml", "dockerfile":
+		return "# TODO: Add your code here"
+	case "html", "xml", "svg":
+		return "<!-- TODO: Add your code here -->"
+	case "css", "scss", "sass", "less":
+		return "/* TODO: Add your code here */"
+	case "sql", "lua", "haskell", "hs":
+		return "-- TODO: Add your code here"
+	default:
+		// go, js, ts, java, c, cpp, rust, swift, kotlin, etc.
+		return "// TODO: Add your code here"
+	}
+}
+
 // GenerateContent generates placeholder code blocks for code block rules
 func (r *CodeBlockRule) GenerateContent(builder *strings.Builder, element schema.StructureElement) bool {
 	if element.SectionRules == nil || len(element.CodeBlocks) == 0 {
@@ -117,7 +134,7 @@ func (r *CodeBlockRule) GenerateContent(builder *strings.Builder, element schema
 			// Generate the minimum required number of code blocks
 			for i := 0; i < rule.Min; i++ {
 				fmt.Fprintf(builder, "```%s\n", lang)
-				builder.WriteString("// TODO: Add your code here\n")
+				builder.WriteString(commentForLang(lang) + "\n")
 				builder.WriteString("```\n\n")
 			}
 		}

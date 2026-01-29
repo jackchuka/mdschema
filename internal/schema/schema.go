@@ -48,6 +48,9 @@ type StructureElement struct {
 	// Heading pattern (string or {pattern: "...", regex: true})
 	Heading HeadingPattern `yaml:"heading,omitempty" json:"heading,omitempty"`
 
+	// Description is guidance text shown in generated output as an HTML comment
+	Description string `yaml:"description,omitempty" json:"description,omitempty" lc:"section description shown in generated output"`
+
 	// Optional element flag
 	Optional bool `yaml:"optional,omitempty" json:"optional,omitempty" lc:"section is not required"`
 
@@ -96,6 +99,7 @@ func (StructureElement) JSONSchema() *jsonschema.Schema {
 		},
 		Description: "Heading pattern to match",
 	})
+	props.Set("description", &jsonschema.Schema{Type: "string", Description: "Section description shown in generated output"})
 	props.Set("optional", &jsonschema.Schema{Type: "boolean", Description: "Section is not required"})
 	props.Set("severity", &jsonschema.Schema{Type: "string", Enum: []any{"error", "warning", "info"}, Description: "Violation severity: error, warning, or info"})
 	props.Set("allow_additional", &jsonschema.Schema{Type: "boolean", Description: "Allow extra subsections not in schema"})

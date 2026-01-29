@@ -40,6 +40,11 @@ func (g *Generator) generateElement(builder *strings.Builder, element schema.Str
 	heading := strings.Repeat("#", level) + " " + headingText
 	builder.WriteString(heading + "\n\n")
 
+	// Add description as HTML comment if present
+	if element.Description != "" {
+		builder.WriteString("<!-- " + element.Description + " -->\n\n")
+	}
+
 	// Add optional marker if applicable
 	if element.Optional {
 		builder.WriteString("<!-- Optional section -->\n\n")
