@@ -24,6 +24,7 @@ mdschema check README.md --schema ./examples/README-schema.yml
 - **Context-aware** - Uses AST parsing for accurate validation without string matching
 - **Fast and lightweight** - Single binary with no dependencies
 - **Cross-platform** - Works on Linux, macOS, and Windows
+- **Editor support** - JSON Schema for auto-completion and validation in VS Code, Neovim, and more
 
 ## Installation
 
@@ -338,6 +339,38 @@ frontmatter:
 - **Tutorial Validation** - Verify step-by-step guides follow the expected format
 - **CI/CD Integration** - Validate documentation in pull requests
 - **Template Generation** - Create starter templates for new projects
+
+## Editor Support
+
+mdschema provides a [JSON Schema](https://json-schema.org/) for `.mdschema.yml` files, enabling auto-completion, validation, and hover documentation in editors that support YAML Language Server.
+
+### VS Code
+
+Add this to your `.vscode/settings.json`:
+
+```json
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json": ".mdschema.yml"
+  }
+}
+```
+
+Or add a schema comment at the top of your `.mdschema.yml` file:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json
+structure:
+  - heading: "# My Project"
+```
+
+### Other Editors
+
+Any editor with YAML Language Server support (Neovim, JetBrains IDEs, etc.) can use the schema URL:
+
+```
+https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json
+```
 
 ## Development
 
