@@ -251,6 +251,10 @@
               ],
               "description": "Heading pattern to match"
             },
+            "description": {
+              "type": "string",
+              "description": "Section description shown in generated output"
+            },
             "optional": {
               "type": "boolean",
               "description": "Section is not required"

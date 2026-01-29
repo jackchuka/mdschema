@@ -168,11 +168,11 @@ func TestStructureRuleGenerateContent(t *testing.T) {
 	}
 
 	content := builder.String()
-	if !strings.Contains(content, "Required section") {
-		t.Error("Should contain 'Required section' comment")
-	}
 	if !strings.Contains(content, "Child1") {
 		t.Error("Should mention child elements")
+	}
+	if !strings.Contains(content, "subsections in order") {
+		t.Error("Should contain ordering guidance for children")
 	}
 }
 
