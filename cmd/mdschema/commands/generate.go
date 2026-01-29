@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/jackchuka/mdschema/internal/generator"
 	"github.com/jackchuka/mdschema/internal/schema"
@@ -57,6 +58,11 @@ func runGenerate(cfg *Config, schemaFile, outputFile string) error {
 
 	// Output to file or stdout
 	if outputFile != "" {
+		if dir := filepath.Dir(outputFile); dir != "." {
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return fmt.Errorf("creating directory %s: %w", dir, err)
+			}
+		}
 		err := os.WriteFile(outputFile, []byte(content), 0o644)
 		if err != nil {
 			return fmt.Errorf("writing to %s: %w", outputFile, err)

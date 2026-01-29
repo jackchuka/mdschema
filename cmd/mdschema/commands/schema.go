@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/jackchuka/mdschema/internal/jsonschema"
 	"github.com/spf13/cobra"
@@ -31,6 +32,11 @@ Or configure your editor to associate the schema with .mdschema.yml files.`,
 			}
 
 			if outputFile != "" {
+				if dir := filepath.Dir(outputFile); dir != "." {
+					if err := os.MkdirAll(dir, 0o755); err != nil {
+						return fmt.Errorf("creating directory %s: %w", dir, err)
+					}
+				}
 				if err := os.WriteFile(outputFile, schemaBytes, 0644); err != nil {
 					return fmt.Errorf("writing schema: %w", err)
 				}

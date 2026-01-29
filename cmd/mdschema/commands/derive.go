@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema/infer"
@@ -48,6 +49,11 @@ func runDerive(cmd *cobra.Command, markdownPath, outputFile string) error {
 	}
 
 	if outputFile != "" {
+		if dir := filepath.Dir(outputFile); dir != "." {
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return fmt.Errorf("creating directory %s: %w", dir, err)
+			}
+		}
 		if err := os.WriteFile(outputFile, data, 0o644); err != nil {
 			return fmt.Errorf("writing schema to %s: %w", outputFile, err)
 		}
