@@ -183,13 +183,18 @@ func (StructureElement) JSONSchema() *jsonschema.Schema {
 	}
 }
 
-// HeadingPattern defines a heading pattern with optional regex support
+// HeadingPattern defines a heading pattern with optional regex or expression support
 type HeadingPattern struct {
 	// Pattern is the heading text or regex pattern to match
 	Pattern string `yaml:"pattern,omitempty" json:"pattern,omitempty" lc:"heading text or regex pattern"`
 
 	// Regex indicates the pattern should be treated as a regular expression
 	Regex bool `yaml:"regex,omitempty" json:"regex,omitempty" lc:"treat pattern as regular expression"`
+
+	// Expr is a boolean expression for dynamic matching (e.g., "slug(filename) == slug(heading)")
+	// Available variables: filename (without extension), heading (heading text)
+	// Available functions: slug, lower, upper, trim, hasPrefix, hasSuffix, strContains, match, replace, trimPrefix, trimSuffix
+	Expr string `yaml:"expr,omitempty" json:"expr,omitempty" lc:"boolean expression for dynamic matching"`
 }
 
 // UnmarshalYAML implements custom unmarshaling to support both string and object syntax
@@ -219,6 +224,10 @@ func (HeadingPattern) JSONSchema() *jsonschema.Schema {
 		Description: "Treat pattern as regular expression",
 		Default:     false,
 	})
+	props.Set("expr", &jsonschema.Schema{
+		Type:        "string",
+		Description: "Boolean expression for dynamic matching (e.g., 'slug(filename) == slug(heading)')",
+	})
 
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
@@ -227,7 +236,7 @@ func (HeadingPattern) JSONSchema() *jsonschema.Schema {
 				Type:                 "object",
 				Properties:           props,
 				AdditionalProperties: jsonschema.FalseSchema,
-				Description:          "Heading pattern with optional regex support",
+				Description:          "Heading pattern with optional regex or expression support",
 			},
 		},
 		Description: "Heading pattern",

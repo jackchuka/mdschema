@@ -30,7 +30,7 @@ func extractHeading(node *ast.Heading, content []byte) *Heading {
 		Text:   text,
 		Line:   line,
 		Column: col,
-		Slug:   generateSlug(text),
+		Slug:   GenerateSlug(text),
 	}
 }
 

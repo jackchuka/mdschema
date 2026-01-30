@@ -71,7 +71,7 @@ func calculateLineColumn(content []byte, offset int) (line, col int) {
 	return line, col
 }
 
-func generateSlug(text string) string {
+func GenerateSlug(text string) string {
 	// GitHub-compatible slug generation:
 	// 1. Convert to lowercase
 	// 2. Remove characters that aren't alphanumeric, space, hyphen, or underscore

@@ -549,3 +549,178 @@ func TestStructureRuleSeverityLevels(t *testing.T) {
 		})
 	}
 }
+
+// Tests for expression-based heading matching
+
+func TestStructureRuleExprSlugMatch(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("getting-started.md", []byte("# Getting Started\n\nContent."))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Expr: "slug(filename) == slug(heading)",
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Should match slug-style, got %d violations: %v", len(violations), violations)
+	}
+}
+
+func TestStructureRuleExprSlugMismatch(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("installation.md", []byte("# Setup Guide\n\nContent."))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Expr: "slug(filename) == slug(heading)",
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	// The document should still bind (structure rule doesn't fail on mismatch during binding)
+	// But validateFirstHeadingIssues should report the mismatch
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "expected") {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Error("Should detect mismatch between heading and filename")
+	}
+}
+
+func TestStructureRuleExprTrimPrefix(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("01-getting-started.md", []byte("# Getting Started\n\nContent."))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Expr: "slug(trimPrefix(filename, `^\\d+-`)) == slug(heading)",
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Should match after trimming prefix, got %d violations: %v", len(violations), violations)
+	}
+}
+
+func TestStructureRuleExprCombinedWithPattern(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("my-project.md", []byte("# My Project\n\n## Features\n\nContent."))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Expr: "slug(filename) == slug(heading)", // Dynamic match for title
+				},
+				Children: []schema.StructureElement{
+					{
+						Heading: schema.HeadingPattern{
+							Pattern: "## Features", // Static pattern for child
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Should match expr for root and pattern for child, got %d violations: %v", len(violations), violations)
+	}
+}
+
+func TestStructureRuleExprREADME(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("README.md", []byte("# README\n\nContent."))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Expr: "slug(filename) == slug(heading)",
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Should match README, got %d violations: %v", len(violations), violations)
+	}
+}
+
+func TestStructureRuleExprExactMatch(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("README.md", []byte("# README\n\nContent."))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{
+					Expr: "filename == heading",
+				},
+			},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Exact match should pass, got %d violations: %v", len(violations), violations)
+	}
+}
