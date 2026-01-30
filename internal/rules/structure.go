@@ -97,10 +97,20 @@ func (r *StructureRule) validateFirstHeadingIssues(ctx *vast.Context) []Violatio
 		if !firstExpected.Optional {
 			firstActual := ctx.Tree.Document.Root.Children[0]
 			if firstActual.Heading != nil {
-				if !r.matcher.MatchesHeadingPattern(firstActual.Heading, firstExpected.Heading.Pattern, firstExpected.Heading.Regex) {
+				if !r.matcher.MatchesHeading(firstActual.Heading, firstExpected.Heading, ctx.Tree.Document.Path) {
 					actualHeading := strings.Repeat("#", firstActual.Heading.Level) + " " + firstActual.Heading.Text
+					var msg string
+					if firstExpected.Heading.Expr != "" {
+						// For expressions, show helpful debugging info
+						filename := vast.ExtractFilename(ctx.Tree.Document.Path)
+						msg = fmt.Sprintf("Heading %q does not match expression %q (filename=%q, heading=%q)",
+							actualHeading, firstExpected.Heading.Expr, filename, firstActual.Heading.Text)
+					} else {
+						msg = fmt.Sprintf("First heading under %q is %q but expected %q",
+							"document root", actualHeading, firstExpected.Heading.Pattern)
+					}
 					violations = append(violations,
-						NewViolation(r.Name(), fmt.Sprintf("First heading under %q is %q but expected %q", "document root", actualHeading, firstExpected.Heading.Pattern), firstActual.Heading.Line, firstActual.Heading.Column).
+						NewViolation(r.Name(), msg, firstActual.Heading.Line, firstActual.Heading.Column).
 							WithSeverity(severityFromSchema(firstExpected.Severity)))
 				}
 			}
@@ -123,11 +133,20 @@ func (r *StructureRule) validateFirstHeadingIssues(ctx *vast.Context) []Violatio
 			return true
 		}
 
-		if !r.matcher.MatchesHeadingPattern(firstActual.Heading, firstExpected.Heading.Pattern, firstExpected.Heading.Regex) {
+		if !r.matcher.MatchesHeading(firstActual.Heading, firstExpected.Heading, ctx.Tree.Document.Path) {
 			actualHeading := strings.Repeat("#", firstActual.Heading.Level) + " " + firstActual.Heading.Text
 			parentName := n.Section.Heading.Text
+			var msg string
+			if firstExpected.Heading.Expr != "" {
+				filename := vast.ExtractFilename(ctx.Tree.Document.Path)
+				msg = fmt.Sprintf("Heading %q under %q does not match expression %q (filename=%q, heading=%q)",
+					actualHeading, parentName, firstExpected.Heading.Expr, filename, firstActual.Heading.Text)
+			} else {
+				msg = fmt.Sprintf("First heading under %q is %q but expected %q",
+					parentName, actualHeading, firstExpected.Heading.Pattern)
+			}
 			violations = append(violations,
-				NewViolation(r.Name(), fmt.Sprintf("First heading under %q is %q but expected %q", parentName, actualHeading, firstExpected.Heading.Pattern), firstActual.Heading.Line, firstActual.Heading.Column).
+				NewViolation(r.Name(), msg, firstActual.Heading.Line, firstActual.Heading.Column).
 					WithSeverity(severityFromSchema(firstExpected.Severity)))
 		}
 
@@ -204,12 +223,12 @@ func (r *StructureRule) validateOrderingIssues(ctx *vast.Context) []Violation {
 	violations := make([]Violation, 0)
 
 	// Check ordering at root level
-	violations = append(violations, r.checkSiblingOrder(ctx.Tree.Roots, ctx.Tree.Document.Root.Children)...)
+	violations = append(violations, r.checkSiblingOrder(ctx.Tree.Roots, ctx.Tree.Document.Root.Children, ctx.Tree.Document.Path)...)
 
 	// Check ordering within each bound node
 	ctx.Tree.WalkBound(func(n *vast.Node) bool {
 		if len(n.Children) > 0 && n.Section != nil {
-			violations = append(violations, r.checkSiblingOrder(n.Children, n.Section.Children)...)
+			violations = append(violations, r.checkSiblingOrder(n.Children, n.Section.Children, ctx.Tree.Document.Path)...)
 		}
 		return true
 	})
@@ -220,7 +239,7 @@ func (r *StructureRule) validateOrderingIssues(ctx *vast.Context) []Violation {
 // checkSiblingOrder checks if siblings appear in correct order.
 // It detects when an unbound node's pattern matches a section that appears
 // before a previously matched sibling (meaning it's out of order).
-func (r *StructureRule) checkSiblingOrder(siblings []*vast.Node, sections []*parser.Section) []Violation {
+func (r *StructureRule) checkSiblingOrder(siblings []*vast.Node, sections []*parser.Section, documentPath string) []Violation {
 	violations := make([]Violation, 0)
 
 	// Track the maximum line number seen so far among bound siblings
@@ -241,7 +260,7 @@ func (r *StructureRule) checkSiblingOrder(siblings []*vast.Node, sections []*par
 				if section.Heading == nil || section.StartLine >= maxBoundLine {
 					continue
 				}
-				if r.matcher.MatchesHeadingPattern(section.Heading, node.Element.Heading.Pattern, node.Element.Heading.Regex) {
+				if r.matcher.MatchesHeading(section.Heading, node.Element.Heading, documentPath) {
 					violations = append(violations,
 						NewViolation(r.Name(), fmt.Sprintf("Element %q should appear after %q but appears before it", section.Heading.Text, maxBoundText), section.Heading.Line, section.Heading.Column).
 							WithSeverity(severityFromSchema(node.Element.Severity)))

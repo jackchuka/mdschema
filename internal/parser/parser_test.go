@@ -272,9 +272,9 @@ func TestGenerateSlug(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		got := generateSlug(tc.input)
+		got := GenerateSlug(tc.input)
 		if got != tc.want {
-			t.Errorf("generateSlug(%q) = %q, want %q", tc.input, got, tc.want)
+			t.Errorf("GenerateSlug(%q) = %q, want %q", tc.input, got, tc.want)
 		}
 	}
 }

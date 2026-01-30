@@ -7,7 +7,8 @@ import (
 
 // Builder transforms parser output + schema into a validation-ready AST.
 type Builder struct {
-	matcher *PatternMatcher
+	matcher  *PatternMatcher
+	filename string // Document filename for expression matching
 }
 
 // NewBuilder creates a new VAST builder.
@@ -25,6 +26,9 @@ func (b *Builder) Build(doc *parser.Document, s *schema.Schema) *Tree {
 		AllNodes:          make([]*Node, 0),
 		UnmatchedSections: make([]*parser.Section, 0),
 	}
+
+	// Store document path for expression matching
+	b.filename = doc.Path
 
 	// Track which sections have been bound at each level
 	boundSections := make(map[*parser.Section]bool)
@@ -137,7 +141,7 @@ func (b *Builder) findFirstMatchAfter(sections []*parser.Section, element schema
 		if section.StartLine <= minLine {
 			continue
 		}
-		if section.Heading != nil && b.matcher.MatchesHeadingPattern(section.Heading, element.Heading.Pattern, element.Heading.Regex) {
+		if section.Heading != nil && b.matcher.MatchesHeading(section.Heading, element.Heading, b.filename) {
 			return section
 		}
 	}

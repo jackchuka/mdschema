@@ -101,10 +101,46 @@ structure:
 
 #### Structure Elements
 
-- **`heading`** - Heading pattern (string for literal, or `{pattern: "...", regex: true}` for regex)
+- **`heading`** - Heading pattern:
+  - String: `"# Title"` (literal match)
+  - Regex: `{pattern: "# .*", regex: true}`
+  - Expression: `{expr: "slug(filename) == slug(heading)"}` (dynamic match)
 - **`optional`** - Whether the section is optional (default: false)
 - **`allow_additional`** - Allow extra subsections not defined in schema (default: false)
 - **`children`** - Nested subsections that must appear within this section
+
+##### Heading Expressions
+
+Use `expr` for dynamic heading matching (e.g., match filename to heading):
+
+```yaml
+structure:
+  - heading:
+      expr: "slug(filename) == slug(heading)" # my-file.md matches "# My File"
+    children:
+      - heading: "## Features" # Static pattern for children
+```
+
+**Available functions:**
+
+| Function                 | Description         | Example                                         |
+| ------------------------ | ------------------- | ----------------------------------------------- |
+| `slug(s)`                | URL-friendly slug   | `slug("My File")` → `"my-file"`                 |
+| `kebab(s)`               | PascalCase to kebab | `kebab("MyFile")` → `"my-file"`                 |
+| `lower(s)` / `upper(s)`  | Case conversion     | `lower("README")` → `"readme"`                  |
+| `trimPrefix(s, pattern)` | Remove regex prefix | `trimPrefix("01-file", "^\\d+-")` → `"file"`    |
+| `trimSuffix(s, pattern)` | Remove regex suffix | `trimSuffix("file_draft", "_draft")` → `"file"` |
+| `hasPrefix(s, prefix)`   | Check prefix        | `hasPrefix("api-ref", "api")` → `true`          |
+| `hasSuffix(s, suffix)`   | Check suffix        | `hasSuffix("file_v2", "_v2")` → `true`          |
+| `strContains(s, substr)` | Check contains      | `strContains("api-ref", "api")` → `true`        |
+| `match(s, pattern)`      | Regex match         | `match("test-123", "test-\\d+")` → `true`       |
+| `replace(s, old, new)`   | Replace all         | `replace("a-b-c", "-", "_")` → `"a_b_c"`        |
+
+**Variables:**
+
+- `filename` (without extension)
+- `heading` (heading text)
+- `level` (heading level 1-6)
 
 #### Section Rules (apply to each section)
 
