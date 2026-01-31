@@ -65,6 +65,7 @@ func Generate() ([]byte, error) {
 		{"TableRule", reflect.TypeOf(schema.TableRule{})},
 		{"ListRule", reflect.TypeOf(schema.ListRule{})},
 		{"WordCountRule", reflect.TypeOf(schema.WordCountRule{})},
+		{"CountConstraint", reflect.TypeOf(schema.CountConstraint{})},
 	}
 
 	for _, t := range additionalTypes {

@@ -120,3 +120,42 @@ func TestRequiredTextSyntax(t *testing.T) {
 
 	runTestCases(t, testCases)
 }
+
+// TestCountConstraint tests the count feature for multi-match elements
+func TestCountConstraint(t *testing.T) {
+	testCases := []TestCase{
+		// Valid count - between min and max
+		{
+			Name:       "count - valid number of matches",
+			FilePath:   testdataDir + "patterns/count_valid.md",
+			SchemaPath: testdataDir + "patterns/count_schema.yml",
+			ShouldPass: true,
+		},
+		// Too few matches (below min)
+		{
+			Name:         "count - too few matches",
+			FilePath:     testdataDir + "patterns/count_too_few.md",
+			SchemaPath:   testdataDir + "patterns/count_schema.yml",
+			ShouldPass:   false,
+			ExpectedRule: "structure",
+		},
+		// Too many matches (above max)
+		{
+			Name:         "count - too many matches",
+			FilePath:     testdataDir + "patterns/count_too_many.md",
+			SchemaPath:   testdataDir + "patterns/count_schema.yml",
+			ShouldPass:   false,
+			ExpectedRule: "structure",
+		},
+		// Content rules applied to each match
+		{
+			Name:         "count - content rules per match",
+			FilePath:     testdataDir + "patterns/count_missing_code.md",
+			SchemaPath:   testdataDir + "patterns/count_schema.yml",
+			ShouldPass:   false,
+			ExpectedRule: "codeblock",
+		},
+	}
+
+	runTestCases(t, testCases)
+}

@@ -24,6 +24,10 @@ type Node struct {
 	// Ordering metadata
 	Order       int // Expected order (position in schema)
 	ActualOrder int // Actual order in document (line number for ordering violations)
+
+	// Count tracking for multi-match elements
+	MatchCount int // Total matches found for this element (0 if not multi-match)
+	MatchIndex int // This node's index (0-based) among siblings with same element
 }
 
 // Content returns the section content if bound, empty string otherwise.

@@ -4,7 +4,9 @@
 
 Before you begin, you need to install Go 1.21 or later.
 
-## Step 1: Install mdschema
+## Steps
+
+### Step 1: Install mdschema
 
 Install mdschema using Go:
 
@@ -12,7 +14,7 @@ Install mdschema using Go:
 go install github.com/jackchuka/mdschema/cmd/mdschema@latest
 ```
 
-## Step 2: Create a Schema
+### Step 2: Create a Schema
 
 Create a `.mdschema.yml` file:
 
@@ -24,7 +26,7 @@ structure:
       - heading: "## Installation"
 ```
 
-## Step 3: Validate a Markdown File
+### Step 3: Validate a Markdown File
 
 Run mdschema to validate your Markdown file:
 

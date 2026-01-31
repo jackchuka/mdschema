@@ -1,0 +1,12 @@
+# Schema with count constraints
+structure:
+  - heading: "# Project"
+    children:
+      - heading:
+          pattern: "## Feature: .*"
+        count:
+          min: 2
+          max: 4
+        code_blocks:
+          - { min: 1 }
+      - heading: "## License"
