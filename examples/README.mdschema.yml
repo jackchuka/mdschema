@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=../schema.json
+#
+# Schema for mdschema's own README.md
+
+structure:
+  - heading:
+      pattern: "# .*" # Regex: any H1 heading
+    allow_additional: true
+    children:
+      - heading: "## Features"
+        lists:
+          - min: 1
+            type: unordered
+            min_items: 1
+      - heading: "## Installation"
+        children:
+          - heading:
+              pattern: "*Homebrew*"
+            code_blocks:
+              - lang: "bash"
+                min: 1
+            optional: true
+          - heading:
+              pattern: "*Source*"
+            code_blocks:
+              - lang: "bash"
+                min: 1
+        allow_additional: true
+      - heading:
+          pattern: "*Quick Start*"
+      - heading:
+          pattern: "*Examples*"
+        allow_additional: true # Has example subsections
+      - heading:
+          pattern: "*Development*"
+        allow_additional: true
+      - heading:
+          pattern: "*Contributing*"
+      - heading:
+          pattern: "*License*"
+
+links:
+  validate_internal: true
+  validate_files: true
+
+heading_rules:
+  no_skip_levels: true
+  unique: true
+  unique_per_level: false
+  max_depth: 5

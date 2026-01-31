@@ -55,7 +55,6 @@ func buildDefaultSchema() *Schema {
 				// Root heading with regex pattern
 				Heading: HeadingPattern{
 					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
-					Regex:   true,
 				},
 				Children: []StructureElement{
 					// First section demonstrates ALL rule types so comments appear
@@ -64,10 +63,10 @@ func buildDefaultSchema() *Schema {
 						Optional: false,
 						SectionRules: &SectionRules{
 							RequiredText: []RequiredTextPattern{
-								{Pattern: "purpose", Regex: false},
+								{Literal: "purpose"},
 							},
 							ForbiddenText: []ForbiddenTextPattern{
-								{Pattern: "TODO", Regex: false},
+								{Literal: "TODO"},
 							},
 							CodeBlocks: []CodeBlockRule{
 								{Lang: "bash", Min: 0, Max: 2},
@@ -124,7 +123,6 @@ func buildDefaultSchema() *Schema {
 					{
 						Heading: HeadingPattern{
 							Pattern: "## (Contributing|How to Contribute)",
-							Regex:   true,
 						},
 						Optional: true,
 					},

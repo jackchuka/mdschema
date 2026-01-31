@@ -203,8 +203,8 @@ MIT
 	// but LICENSE should only be matched by the second explicit element
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: schema.HeadingPattern{Pattern: "# [A-Z][a-z].*", Regex: true}}, // Matches "My Project" but not "LICENSE"
-			{Heading: schema.HeadingPattern{Pattern: "# LICENSE"}},                   // Exact match
+			{Heading: schema.HeadingPattern{Pattern: "# [A-Z][a-z].*"}}, // Matches "My Project" but not "LICENSE"
+			{Heading: schema.HeadingPattern{Pattern: "# LICENSE"}},      // Exact match
 		},
 	}
 
@@ -325,7 +325,7 @@ func TestNodeAccessors(t *testing.T) {
 	}
 }
 
-func TestRegexFlagRequired(t *testing.T) {
+func TestPatternAlwaysRegex(t *testing.T) {
 	p := parser.New()
 	doc, err := p.Parse("test.md", []byte(`# Hello World
 
@@ -335,10 +335,10 @@ func TestRegexFlagRequired(t *testing.T) {
 		t.Fatalf("Parse() error: %v", err)
 	}
 
-	// Without regex flag, pattern should be treated as literal
+	// Pattern is always treated as regex
 	s := &schema.Schema{
 		Structure: []schema.StructureElement{
-			{Heading: schema.HeadingPattern{Pattern: "# [A-Z].*"}}, // No Regex flag - should match literally
+			{Heading: schema.HeadingPattern{Pattern: "# [A-Z].*"}}, // Pattern is always regex
 		},
 	}
 
@@ -349,7 +349,37 @@ func TestRegexFlagRequired(t *testing.T) {
 	}
 
 	root := ctx.Tree.Roots[0]
-	// Should match the literal "# [A-Z].*" heading, not "Hello World"
+	// Pattern is regex, should match "Hello World" (first heading matching [A-Z].*)
+	if root.HeadingText() != "Hello World" {
+		t.Errorf("Expected regex match 'Hello World', got '%s'", root.HeadingText())
+	}
+}
+
+func TestLiteralExactMatch(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte(`# Hello World
+
+# [A-Z].*
+`))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	// Literal is for exact match (scalar YAML form)
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Literal: "# [A-Z].*"}}, // Literal is exact match
+		},
+	}
+
+	ctx := NewContext(doc, s, "")
+
+	if len(ctx.Tree.Roots) != 1 {
+		t.Fatalf("Expected 1 root, got %d", len(ctx.Tree.Roots))
+	}
+
+	root := ctx.Tree.Roots[0]
+	// Literal should match the literal "# [A-Z].*" heading, not "Hello World"
 	if root.HeadingText() != "[A-Z].*" {
 		t.Errorf("Expected literal match '[A-Z].*', got '%s'", root.HeadingText())
 	}

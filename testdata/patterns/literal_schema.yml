@@ -1,0 +1,5 @@
+# Test literal heading match (scalar form)
+structure:
+  - heading: "# My Project"  # Literal: must match exactly
+    children:
+      - heading: "## Features"

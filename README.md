@@ -76,7 +76,6 @@ Create a `.mdschema.yml` file to define your documentation structure:
 structure:
   - heading:
       pattern: "# [a-zA-Z0-9_\\- ]+" # Regex pattern for project title
-      regex: true
     children:
       - heading: "## Features"
         optional: true
@@ -103,7 +102,7 @@ structure:
 
 - **`heading`** - Heading pattern:
   - String: `"# Title"` (literal match)
-  - Regex: `{pattern: "# .*", regex: true}`
+  - Regex: `{pattern: "# .*"}` (regex match after headings are extracted)
   - Expression: `{expr: "slug(filename) == slug(heading)"}` (dynamic match)
 - **`optional`** - Whether the section is optional (default: false)
 - **`allow_additional`** - Allow extra subsections not defined in schema (default: false)
@@ -144,8 +143,8 @@ structure:
 
 #### Section Rules (apply to each section)
 
-- **`required_text`** - Text that must appear (`"text"` or `{pattern: "...", regex: true}`)
-- **`forbidden_text`** - Text that must NOT appear (`"text"` or `{pattern: "...", regex: true}`)
+- **`required_text`** - Text that must appear (`"text"` for substring or `{pattern: "..."}` for regex)
+- **`forbidden_text`** - Text that must NOT appear (`"text"` for substring or `{pattern: "..."}` for regex)
 - **`code_blocks`** - Code block requirements: `{lang: "bash", min: 1, max: 3}`
 - **`images`** - Image requirements: `{min: 1, require_alt: true, formats: ["png", "svg"]}`
 - **`tables`** - Table requirements: `{min: 1, min_columns: 2, required_headers: ["Name"]}`
@@ -203,7 +202,6 @@ mdschema derive README.md -o inferred-schema.yml
 structure:
   - heading:
       pattern: "# .*"
-      regex: true
     children:
       - heading: "## Installation"
         code_blocks:
@@ -235,17 +233,14 @@ structure:
 structure:
   - heading:
       pattern: "# .*"
-      regex: true
     children:
       - heading: "## Prerequisites"
       - heading:
           pattern: "## Step 1: .*"
-          regex: true
         code_blocks:
           - { min: 1 } # Any language
       - heading:
           pattern: "## Step 2: .*"
-          regex: true
         code_blocks:
           - { min: 1 }
       - heading: "## Next Steps"
@@ -290,7 +285,6 @@ links:
 structure:
   - heading:
       pattern: "# .*"
-      regex: true
     children:
       - heading: "## Introduction"
         word_count: { min: 100, max: 300 }
@@ -315,8 +309,8 @@ mdschema includes comprehensive validation rules organized into three categories
 | Rule               | Description                                        | Options                                               |
 | ------------------ | -------------------------------------------------- | ----------------------------------------------------- |
 | **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `allow_additional`, `children` |
-| **Required Text**  | Text/patterns that must appear                     | `pattern`, `regex`                                    |
-| **Forbidden Text** | Text/patterns that must NOT appear                 | `pattern`, `regex`                                    |
+| **Required Text**  | Text/patterns that must appear                     | `"text"` (literal) or `{pattern: "..."}` (regex)      |
+| **Forbidden Text** | Text/patterns that must NOT appear                 | `"text"` (literal) or `{pattern: "..."}` (regex)      |
 | **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                                  |
 | **Images**         | Image presence and format                          | `min`, `max`, `require_alt`, `formats`                |
 | **Tables**         | Table structure validation                         | `min`, `max`, `min_columns`, `required_headers`       |

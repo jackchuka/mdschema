@@ -33,10 +33,14 @@ func (r *RequiredTextRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	ctx.Tree.WalkBound(func(n *vast.Node) bool {
 		if n.Element.SectionRules != nil && len(n.Element.RequiredText) > 0 {
 			for _, pattern := range n.Element.RequiredText {
-				if !r.contentContainsPattern(n.Content(), pattern.Pattern, pattern.Regex) {
+				if !r.contentContainsPattern(n.Content(), pattern) {
+					patternStr := pattern.Literal
+					if patternStr == "" {
+						patternStr = pattern.Pattern
+					}
 					line, col := n.Location()
 					violations = append(violations,
-						NewViolation(r.Name(), fmt.Sprintf("Required text '%s' not found in section '%s'", pattern.Pattern, n.HeadingText()), line, col))
+						NewViolation(r.Name(), fmt.Sprintf("Required text '%s' not found in section '%s'", patternStr, n.HeadingText()), line, col))
 				}
 			}
 		}
@@ -55,10 +59,10 @@ func (r *RequiredTextRule) GenerateContent(builder *strings.Builder, element sch
 	// Add required text placeholders
 	builder.WriteString("<!-- This section must contain the following text: -->\n")
 	for _, pattern := range element.RequiredText {
-		if pattern.Regex {
+		if pattern.Pattern != "" {
 			fmt.Fprintf(builder, "<!-- - %s (regex) -->\n", pattern.Pattern)
 		} else {
-			fmt.Fprintf(builder, "<!-- - %s -->\n", pattern.Pattern)
+			fmt.Fprintf(builder, "<!-- - %s -->\n", pattern.Literal)
 		}
 	}
 	builder.WriteString("\n")
@@ -67,16 +71,17 @@ func (r *RequiredTextRule) GenerateContent(builder *strings.Builder, element sch
 }
 
 // contentContainsPattern checks if content contains the required pattern
-func (r *RequiredTextRule) contentContainsPattern(content, pattern string, isRegex bool) bool {
-	if isRegex {
-		re, err := regexp.Compile(pattern)
-		if err != nil {
-			// If regex compilation fails, fall back to substring match
-			return strings.Contains(content, pattern)
-		}
-		return re.MatchString(content)
+func (r *RequiredTextRule) contentContainsPattern(content string, pattern schema.RequiredTextPattern) bool {
+	// If literal is set (scalar form), use substring match
+	if pattern.Literal != "" {
+		return strings.Contains(content, pattern.Literal)
 	}
 
-	// Simple substring match
-	return strings.Contains(content, pattern)
+	// Otherwise use regex match
+	re, err := regexp.Compile(pattern.Pattern)
+	if err != nil {
+		// If regex compilation fails, fall back to substring match
+		return strings.Contains(content, pattern.Pattern)
+	}
+	return re.MatchString(content)
 }

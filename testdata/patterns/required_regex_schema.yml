@@ -1,0 +1,5 @@
+# Test regex required_text (pattern form)
+structure:
+  - heading: "# Title"
+    required_text:
+      - pattern: "v\\d+\\.\\d+\\.\\d+"  # Regex: version number like v1.2.3

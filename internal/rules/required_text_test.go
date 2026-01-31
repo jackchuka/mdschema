@@ -106,7 +106,7 @@ func TestRequiredTextRegexMatch(t *testing.T) {
 				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					RequiredText: []schema.RequiredTextPattern{
-						{Pattern: "(?i)version: \\d+\\.\\d+\\.\\d+", Regex: true},
+						{Pattern: "(?i)version: \\d+\\.\\d+\\.\\d+"},
 					},
 				},
 			},
@@ -138,7 +138,7 @@ func TestRequiredTextRegexNoMatch(t *testing.T) {
 				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					RequiredText: []schema.RequiredTextPattern{
-						{Pattern: "^Version: \\d+\\.\\d+\\.\\d+", Regex: true},
+						{Pattern: "^Version: \\d+\\.\\d+\\.\\d+"},
 					},
 				},
 			},
@@ -167,7 +167,7 @@ func TestRequiredTextCaseInsensitive(t *testing.T) {
 				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					RequiredText: []schema.RequiredTextPattern{
-						{Pattern: "(?i)important note", Regex: true},
+						{Pattern: "(?i)important note"},
 					},
 				},
 			},
@@ -191,8 +191,8 @@ func TestRequiredTextGenerateContent(t *testing.T) {
 		Heading: schema.HeadingPattern{Pattern: "## Section"},
 		SectionRules: &schema.SectionRules{
 			RequiredText: []schema.RequiredTextPattern{
-				{Pattern: "important text"},
-				{Pattern: "another phrase"},
+				{Literal: "important text"},
+				{Literal: "another phrase"},
 			},
 		},
 	}
@@ -232,25 +232,30 @@ func TestContentContainsPattern(t *testing.T) {
 
 	tests := []struct {
 		content string
-		pattern string
-		isRegex bool
+		pattern schema.RequiredTextPattern
 		want    bool
 	}{
-		{"Hello world", "world", false, true},
-		{"Hello world", "foo", false, false},
-		{"Version: 1.0.0", "^Version:", true, true},
-		{"No match here", "^Version:", true, false},
-		{"HELLO WORLD", "(?i)hello", true, true},
-		// Without regex flag, regex metacharacters are treated literally
-		{"Hello world", "^Hello", false, false},
-		{"^Hello world", "^Hello", false, true},
+		// Literal patterns (substring match)
+		{"Hello world", schema.RequiredTextPattern{Literal: "world"}, true},
+		{"Hello world", schema.RequiredTextPattern{Literal: "foo"}, false},
+		// Regex patterns
+		{"Version: 1.0.0", schema.RequiredTextPattern{Pattern: "^Version:"}, true},
+		{"No match here", schema.RequiredTextPattern{Pattern: "^Version:"}, false},
+		{"HELLO WORLD", schema.RequiredTextPattern{Pattern: "(?i)hello"}, true},
+		// Literal treats regex metacharacters as literal
+		{"Hello world", schema.RequiredTextPattern{Literal: "^Hello"}, false},
+		{"^Hello world", schema.RequiredTextPattern{Literal: "^Hello"}, true},
 	}
 
 	for _, tc := range tests {
-		got := rule.contentContainsPattern(tc.content, tc.pattern, tc.isRegex)
+		got := rule.contentContainsPattern(tc.content, tc.pattern)
+		patternStr := tc.pattern.Literal
+		if patternStr == "" {
+			patternStr = tc.pattern.Pattern
+		}
 		if got != tc.want {
-			t.Errorf("contentContainsPattern(%q, %q, %v) = %v, want %v",
-				tc.content, tc.pattern, tc.isRegex, got, tc.want)
+			t.Errorf("contentContainsPattern(%q, %q) = %v, want %v",
+				tc.content, patternStr, got, tc.want)
 		}
 	}
 }

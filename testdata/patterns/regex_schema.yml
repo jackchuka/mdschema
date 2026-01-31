@@ -1,0 +1,6 @@
+# Test regex heading match (pattern form)
+structure:
+  - heading:
+      pattern: "# [A-Z][a-z]+ Project"  # Regex: capitalized word + " Project"
+    children:
+      - heading: "## Features"

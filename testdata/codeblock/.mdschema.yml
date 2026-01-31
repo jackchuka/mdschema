@@ -1,8 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json
+#
 # Schema for codeblock rule tests
 structure:
   - heading:
       pattern: "# .*"
-      regex: true
     optional: true
     children:
       - heading: "## Installation"

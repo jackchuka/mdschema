@@ -1,0 +1,5 @@
+# Test literal required_text (scalar form)
+structure:
+  - heading: "# Title"
+    required_text:
+      - "important"  # Literal: must contain "important" as substring
