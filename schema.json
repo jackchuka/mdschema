@@ -21,6 +21,20 @@
       "additionalProperties": false,
       "type": "object"
     },
+    "CountConstraint": {
+      "properties": {
+        "min": {
+          "type": "integer",
+          "description": "Minimum occurrences required"
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum occurrences allowed (0 = unlimited)"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "FieldFormat": {
       "type": "string",
       "enum": [
@@ -255,6 +269,10 @@
             "optional": {
               "type": "boolean",
               "description": "Section is not required"
+            },
+            "count": {
+              "$ref": "#/$defs/CountConstraint",
+              "description": "Occurrence constraints {min, max}"
             },
             "severity": {
               "type": "string",

@@ -54,6 +54,10 @@ type StructureElement struct {
 	// Optional element flag
 	Optional bool `yaml:"optional,omitempty" json:"optional,omitempty" lc:"section is not required"`
 
+	// Count defines how many times this element can match (default: exactly once)
+	// When specified, takes precedence over Optional
+	Count *CountConstraint `yaml:"count,omitempty" json:"count,omitempty" lc:"occurrence constraints {min, max}"`
+
 	// Severity level for violations (error, warning, info). Default: error
 	Severity string `yaml:"severity,omitempty" json:"severity,omitempty" lc:"violation severity: error, warning, or info" jsonschema:"enum=error,enum=warning,enum=info"`
 
@@ -101,6 +105,7 @@ func (StructureElement) JSONSchema() *jsonschema.Schema {
 	})
 	props.Set("description", &jsonschema.Schema{Type: "string", Description: "Section description shown in generated output"})
 	props.Set("optional", &jsonschema.Schema{Type: "boolean", Description: "Section is not required"})
+	props.Set("count", &jsonschema.Schema{Ref: "#/$defs/CountConstraint", Description: "Occurrence constraints {min, max}"})
 	props.Set("severity", &jsonschema.Schema{Type: "string", Enum: []any{"error", "warning", "info"}, Description: "Violation severity: error, warning, or info"})
 	props.Set("allow_additional", &jsonschema.Schema{Type: "boolean", Description: "Allow extra subsections not in schema"})
 	props.Set("children", &jsonschema.Schema{
@@ -404,6 +409,12 @@ type ListRule struct {
 type WordCountRule struct {
 	Min int `yaml:"min,omitempty" json:"min,omitempty" lc:"minimum words"`
 	Max int `yaml:"max,omitempty" json:"max,omitempty" lc:"maximum words"`
+}
+
+// CountConstraint defines how many times a structure element can match
+type CountConstraint struct {
+	Min int `yaml:"min,omitempty" json:"min,omitempty" lc:"minimum occurrences required"`
+	Max int `yaml:"max,omitempty" json:"max,omitempty" lc:"maximum occurrences allowed (0 = unlimited)"`
 }
 
 // HeadingRules defines global validation rules for document headings

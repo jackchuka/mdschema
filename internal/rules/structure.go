@@ -50,9 +50,9 @@ func (r *StructureRule) ValidateWithContext(ctx *vast.Context) []Violation {
 	// Report headings that are not defined in the structure.
 	violations = append(violations, r.validateUnmatchedSections(ctx)...)
 
-	// Check for missing required elements
+	// Check for missing required elements (respecting count constraints)
 	ctx.Tree.Walk(func(n *vast.Node) bool {
-		if !n.IsBound && !n.Element.Optional {
+		if !n.IsBound && !isElementOptional(n.Element) {
 			if hasUnboundAncestor(n) {
 				return true
 			}
@@ -69,10 +69,21 @@ func (r *StructureRule) ValidateWithContext(ctx *vast.Context) []Violation {
 		return true
 	})
 
+	// Validate count constraints
+	violations = append(violations, r.validateCountConstraints(ctx)...)
+
 	// Check ordering within each level
 	violations = append(violations, r.validateOrderingIssues(ctx)...)
 
 	return violations
+}
+
+// isElementOptional returns true if the element is optional (0 min matches).
+func isElementOptional(element schema.StructureElement) bool {
+	if element.Count != nil {
+		return element.Count.Min == 0
+	}
+	return element.Optional
 }
 
 func hasUnboundAncestor(n *vast.Node) bool {
@@ -82,6 +93,90 @@ func hasUnboundAncestor(n *vast.Node) bool {
 		}
 	}
 	return false
+}
+
+// validateCountConstraints validates that multi-match elements have the correct number of matches.
+func (r *StructureRule) validateCountConstraints(ctx *vast.Context) []Violation {
+	if ctx == nil || ctx.Tree == nil || ctx.Schema == nil {
+		return nil
+	}
+
+	violations := make([]Violation, 0)
+
+	// Check root-level elements
+	violations = append(violations, r.checkCountForElements(ctx.Schema.Structure, ctx.Tree.Roots, "document root")...)
+
+	// Check children of each bound node
+	ctx.Tree.WalkBound(func(n *vast.Node) bool {
+		if len(n.Element.Children) > 0 {
+			parentName := n.HeadingText()
+			violations = append(violations, r.checkCountForElements(n.Element.Children, n.Children, parentName)...)
+		}
+		return true
+	})
+
+	return violations
+}
+
+// checkCountForElements validates count constraints for a set of schema elements against actual nodes.
+func (r *StructureRule) checkCountForElements(elements []schema.StructureElement, nodes []*vast.Node, parentName string) []Violation {
+	violations := make([]Violation, 0)
+
+	for _, element := range elements {
+		if element.Count == nil {
+			continue // No count constraint
+		}
+
+		// Count how many nodes match this element
+		count := 0
+		for _, node := range nodes {
+			if node.IsBound && elementMatches(node.Element, element) {
+				count++
+			}
+		}
+
+		minMatches := element.Count.Min
+		maxMatches := element.Count.Max
+
+		// Get a readable element name
+		elementName := element.Heading.Pattern
+		if elementName == "" {
+			elementName = element.Heading.Literal
+		}
+		if elementName == "" {
+			elementName = element.Heading.Expr
+		}
+
+		// Check minimum constraint
+		if count < minMatches {
+			violations = append(violations,
+				NewViolation(r.Name(),
+					fmt.Sprintf("Element %q within %q requires at least %d occurrence(s), found %d",
+						elementName, parentName, minMatches, count),
+					1, 1).
+					WithSeverity(severityFromSchema(element.Severity)))
+		}
+
+		// Check maximum constraint (0 means unlimited)
+		if maxMatches > 0 && count > maxMatches {
+			violations = append(violations,
+				NewViolation(r.Name(),
+					fmt.Sprintf("Element %q within %q allows at most %d occurrence(s), found %d",
+						elementName, parentName, maxMatches, count),
+					1, 1).
+					WithSeverity(severityFromSchema(element.Severity)))
+		}
+	}
+
+	return violations
+}
+
+// elementMatches checks if a node's element matches the given schema element.
+func elementMatches(nodeElement, schemaElement schema.StructureElement) bool {
+	// Compare by heading pattern (all fields)
+	return nodeElement.Heading.Pattern == schemaElement.Heading.Pattern &&
+		nodeElement.Heading.Literal == schemaElement.Heading.Literal &&
+		nodeElement.Heading.Expr == schemaElement.Heading.Expr
 }
 
 func (r *StructureRule) validateFirstHeadingIssues(ctx *vast.Context) []Violation {

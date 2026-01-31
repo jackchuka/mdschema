@@ -104,7 +104,9 @@ structure:
   - String: `"# Title"` (literal match)
   - Regex: `{pattern: "# .*"}` (regex match after headings are extracted)
   - Expression: `{expr: "slug(filename) == slug(heading)"}` (dynamic match)
+- **`description`** - Guidance text shown as HTML comment in generated templates
 - **`optional`** - Whether the section is optional (default: false)
+- **`count`** - Match multiple sections: `{min: 1, max: 5}` (0 = unlimited)
 - **`allow_additional`** - Allow extra subsections not defined in schema (default: false)
 - **`children`** - Nested subsections that must appear within this section
 
@@ -236,13 +238,12 @@ structure:
     children:
       - heading: "## Prerequisites"
       - heading:
-          pattern: "## Step 1: .*"
+          pattern: "## Step [0-9]+: .*"
+        count:
+          min: 1 # At least 1 step required
+          max: 0 # Unlimited steps allowed
         code_blocks:
-          - { min: 1 } # Any language
-      - heading:
-          pattern: "## Step 2: .*"
-        code_blocks:
-          - { min: 1 }
+          - { min: 1 } # Each step must have a code block
       - heading: "## Next Steps"
         optional: true
 ```
@@ -306,16 +307,16 @@ mdschema includes comprehensive validation rules organized into three categories
 
 ### Section Rules (per-section validation)
 
-| Rule               | Description                                        | Options                                               |
-| ------------------ | -------------------------------------------------- | ----------------------------------------------------- |
-| **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `allow_additional`, `children` |
-| **Required Text**  | Text/patterns that must appear                     | `"text"` (literal) or `{pattern: "..."}` (regex)      |
-| **Forbidden Text** | Text/patterns that must NOT appear                 | `"text"` (literal) or `{pattern: "..."}` (regex)      |
-| **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                                  |
-| **Images**         | Image presence and format                          | `min`, `max`, `require_alt`, `formats`                |
-| **Tables**         | Table structure validation                         | `min`, `max`, `min_columns`, `required_headers`       |
-| **Lists**          | List presence and type                             | `min`, `max`, `type`, `min_items`                     |
-| **Word Count**     | Content length constraints                         | `min`, `max`                                          |
+| Rule               | Description                                        | Options                                                        |
+| ------------------ | -------------------------------------------------- | -------------------------------------------------------------- |
+| **Structure**      | Ensures sections appear in correct order/hierarchy | `heading`, `optional`, `count`, `allow_additional`, `children` |
+| **Required Text**  | Text/patterns that must appear                     | `"text"` (literal) or `{pattern: "..."}` (regex)               |
+| **Forbidden Text** | Text/patterns that must NOT appear                 | `"text"` (literal) or `{pattern: "..."}` (regex)               |
+| **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                                           |
+| **Images**         | Image presence and format                          | `min`, `max`, `require_alt`, `formats`                         |
+| **Tables**         | Table structure validation                         | `min`, `max`, `min_columns`, `required_headers`                |
+| **Lists**          | List presence and type                             | `min`, `max`, `type`, `min_items`                              |
+| **Word Count**     | Content length constraints                         | `min`, `max`                                                   |
 
 ### Global Rules (document-wide validation)
 

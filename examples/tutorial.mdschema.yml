@@ -3,24 +3,29 @@
 # Example schema for tutorial documentation
 # Ensures step-by-step guides follow a consistent format
 #
-# Demonstrates:
-#   - Regex pattern for flexible step numbering
-#   - allow_additional for multiple steps
-#   - Literal headings for fixed sections
+# The `count` feature allows matching multiple sections with the same pattern
+# and validating each one independently.
 
 structure:
   - heading:
-      pattern: "# .*"  # Regex: any H1 heading
-    allow_additional: true  # Allow multiple Step sections
+      pattern: "# .*"
     children:
       - heading: "## Prerequisites"
         required_text:
           - "install"
 
-      - heading:
-          pattern: "## Step [0-9]+: .*"  # Regex: matches any step number
-        code_blocks:
-          - { min: 1 }
+      - heading: "## Steps"
+        children:
+          # count: min 1 means at least 1 step required
+          # count: max 0 means unlimited steps allowed
+          # Each matched step is validated for code_blocks
+          - heading:
+              pattern: "### Step [0-9]+: .*"
+            count:
+              min: 1
+              max: 0  # unlimited
+            code_blocks:
+              - { min: 1 }
 
       - heading: "## Troubleshooting"
         optional: true
