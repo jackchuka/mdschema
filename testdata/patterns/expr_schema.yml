@@ -1,0 +1,8 @@
+# Test expression heading match (expr form)
+# Filename (without extension) should match heading slug
+structure:
+  - heading:
+      expr: "slug(filename) == slug(heading)"  # my-feature.md matches "# My Feature"
+    children:
+      - heading: "## Details"
+        optional: true

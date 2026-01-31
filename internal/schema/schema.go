@@ -308,7 +308,7 @@ func (RequiredTextPattern) JSONSchema() *jsonschema.Schema {
 
 // CodeBlockRule defines validation for code blocks within a section
 type CodeBlockRule struct {
-	Lang string `yaml:"lang" json:"lang" lc:"language identifier (bash, go, python, etc.)"`
+	Lang string `yaml:"lang,omitempty" json:"lang,omitempty" lc:"language identifier (bash, go, python, etc.) - omit for any language"`
 	Min  int    `yaml:"min,omitempty" json:"min,omitempty" lc:"minimum required blocks"`
 	Max  int    `yaml:"max,omitempty" json:"max,omitempty" lc:"maximum allowed blocks"`
 }

@@ -1,26 +1,22 @@
+# yaml-language-server: $schema=../schema.json
+#
 # AI-friendly requirements.md schema
 # Ensures requirements documents follow a consistent, machine-readable structure
-# that makes it easy for AI systems to parse and understand requirements
 
 structure:
   - heading:
-      pattern: "# .*Requirements.*"
+      pattern: "# .*Requirements.*" # Regex: H1 containing "Requirements"
     children:
       - heading: "## Overview"
         required_text:
-          - "purpose"
+          - "purpose" # Literal: must contain these words
           - "scope"
 
       - heading: "## Functional Requirements"
+        allow_additional: true # Allow multiple FR### sections
         children:
           - heading:
-              pattern: "### FR001: .*"
-                    required_text:
-              - "shall"
-              - "must"
-          - heading:
-              pattern: "### FR[0-9]+: .*"
-                    optional: true
+              pattern: "### FR001: .*" # Regex: first requirement
             required_text:
               - "shall"
               - "must"
@@ -51,8 +47,6 @@ structure:
             optional: true
           - heading: "### Technology Stack"
             optional: true
-            code_blocks:
-              - { min: 1 } # Technology examples
           - heading: "### Infrastructure"
             optional: true
           - heading: "### Data Requirements"

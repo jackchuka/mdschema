@@ -7,7 +7,7 @@
       "properties": {
         "lang": {
           "type": "string",
-          "description": "Language identifier (bash, go, python, etc.)"
+          "description": "Language identifier (bash, go, python, etc.) - omit for any language"
         },
         "min": {
           "type": "integer",
@@ -19,10 +19,7 @@
         }
       },
       "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "lang"
-      ]
+      "type": "object"
     },
     "FieldFormat": {
       "type": "string",

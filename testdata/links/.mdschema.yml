@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json
+#
 # Schema for link validation tests
 links:
   validate_internal: true

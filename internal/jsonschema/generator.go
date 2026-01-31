@@ -55,6 +55,7 @@ func Generate() ([]byte, error) {
 		LookupComment:  lookupComment,
 	}
 
+	// Additional types that need explicit definitions
 	additionalTypes := []struct {
 		name string
 		typ  reflect.Type

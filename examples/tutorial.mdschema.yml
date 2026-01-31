@@ -1,27 +1,29 @@
+# yaml-language-server: $schema=../schema.json
+#
 # Example schema for tutorial documentation
 # Ensures step-by-step guides follow a consistent format
+#
+# Demonstrates:
+#   - Regex pattern for flexible step numbering
+#   - allow_additional for multiple steps
+#   - Literal headings for fixed sections
 
 structure:
   - heading:
-      pattern: "# .*"
+      pattern: "# .*"  # Regex: any H1 heading
+    allow_additional: true  # Allow multiple Step sections
     children:
       - heading: "## Prerequisites"
         required_text:
           - "install"
+
       - heading:
-          pattern: "## Step 1: .*"
-            code_blocks:
-          - { min: 1 } # Each step needs at least one code example
-      - heading:
-          pattern: "## Step 2: .*"
-            code_blocks:
-          - { min: 1 }
-      - heading:
-          pattern: "## Step 3: .*"
-            optional: true # Additional steps are optional
+          pattern: "## Step [0-9]+: .*"  # Regex: matches any step number
         code_blocks:
           - { min: 1 }
+
       - heading: "## Troubleshooting"
         optional: true
+
       - heading: "## Next Steps"
         optional: true
