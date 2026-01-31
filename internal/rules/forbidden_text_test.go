@@ -79,7 +79,7 @@ func TestForbiddenTextRuleRegex(t *testing.T) {
 				Heading: schema.HeadingPattern{Pattern: "# Title"},
 				SectionRules: &schema.SectionRules{
 					ForbiddenText: []schema.ForbiddenTextPattern{
-						{Pattern: "FIXME-\\d+", Regex: true},
+						{Pattern: "FIXME-\\d+"},
 					},
 				},
 			},

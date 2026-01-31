@@ -2,7 +2,6 @@
 structure:
   - heading:
       pattern: "# .*"
-      regex: true
     optional: true
     children:
       - heading: "## Installation"

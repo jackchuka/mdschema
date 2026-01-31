@@ -23,30 +23,25 @@ func NewPatternMatcher() *PatternMatcher {
 	}
 }
 
-// MatchesHeading checks if a heading matches a HeadingPattern (pattern, regex, or expr).
+// MatchesHeading checks if a heading matches a HeadingPattern (literal, pattern, or expr).
 func (pm *PatternMatcher) MatchesHeading(heading *parser.Heading, hp schema.HeadingPattern, filename string) bool {
 	// If expression is provided, use expression matching
 	if hp.Expr != "" {
 		return pm.matchesHeadingExpr(heading, hp.Expr, filename)
 	}
 
-	// Otherwise use pattern/regex matching
-	return pm.MatchesHeadingPattern(heading, hp.Pattern, hp.Regex)
-}
-
-// MatchesHeadingPattern checks if a heading matches a pattern with explicit regex flag.
-func (pm *PatternMatcher) MatchesHeadingPattern(heading *parser.Heading, pattern string, isRegex bool) bool {
 	// Construct full heading text with level markers
 	levelMarkers := strings.Repeat("#", heading.Level)
 	fullHeading := levelMarkers + " " + heading.Text
 
-	if isRegex {
-		return pm.matchRegexPattern(fullHeading, pattern)
+	// If literal is provided (scalar form), use exact match
+	if hp.Literal != "" {
+		expectedPattern := "^" + regexp.QuoteMeta(hp.Literal) + "$"
+		return pm.matchRegexPattern(fullHeading, expectedPattern)
 	}
 
-	// Exact match - auto-anchor for precise matching
-	expectedPattern := "^" + regexp.QuoteMeta(pattern) + "$"
-	return pm.matchRegexPattern(fullHeading, expectedPattern)
+	// Otherwise use pattern matching (always regex)
+	return pm.matchRegexPattern(fullHeading, hp.Pattern)
 }
 
 // matchesHeadingExpr evaluates an expression to check if heading matches.

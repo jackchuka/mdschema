@@ -5,7 +5,6 @@
 structure:
   - heading:
       pattern: "# .*Requirements.*"
-      regex: true
     children:
       - heading: "## Overview"
         required_text:
@@ -16,14 +15,12 @@ structure:
         children:
           - heading:
               pattern: "### FR001: .*"
-              regex: true
-            required_text:
+                    required_text:
               - "shall"
               - "must"
           - heading:
               pattern: "### FR[0-9]+: .*"
-              regex: true
-            optional: true
+                    optional: true
             required_text:
               - "shall"
               - "must"

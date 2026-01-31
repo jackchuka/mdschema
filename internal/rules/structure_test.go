@@ -220,7 +220,6 @@ func TestStructureRuleRegexMatchesLicenseHeading(t *testing.T) {
 			{
 				Heading: schema.HeadingPattern{
 					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
-					Regex:   true,
 				},
 				Children: []schema.StructureElement{
 					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
@@ -261,7 +260,6 @@ func TestStructureRuleRootFirstMismatch(t *testing.T) {
 			{
 				Heading: schema.HeadingPattern{
 					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
-					Regex:   true,
 				},
 				Children: []schema.StructureElement{
 					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},
@@ -306,7 +304,6 @@ func TestStructureRuleOrderMatchingSkipsEarlierHeadings(t *testing.T) {
 			{
 				Heading: schema.HeadingPattern{
 					Pattern: "# [A-Za-z0-9][A-Za-z0-9 _-]*",
-					Regex:   true,
 				},
 				Children: []schema.StructureElement{
 					{Heading: schema.HeadingPattern{Pattern: "## Overview"}},

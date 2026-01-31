@@ -185,11 +185,11 @@ func (StructureElement) JSONSchema() *jsonschema.Schema {
 
 // HeadingPattern defines a heading pattern with optional regex or expression support
 type HeadingPattern struct {
-	// Pattern is the heading text or regex pattern to match
-	Pattern string `yaml:"pattern,omitempty" json:"pattern,omitempty" lc:"heading text or regex pattern"`
+	// Literal is set when using scalar form (e.g., heading: "## Features") - exact match
+	Literal string `yaml:"-" json:"-"`
 
-	// Regex indicates the pattern should be treated as a regular expression
-	Regex bool `yaml:"regex,omitempty" json:"regex,omitempty" lc:"treat pattern as regular expression"`
+	// Pattern is the heading regex pattern to match (always treated as regex)
+	Pattern string `yaml:"pattern,omitempty" json:"pattern,omitempty" lc:"heading regex pattern"`
 
 	// Expr is a boolean expression for dynamic matching (e.g., "slug(filename) == slug(heading)")
 	// Available variables: filename (without extension), heading (heading text)
@@ -199,14 +199,13 @@ type HeadingPattern struct {
 
 // UnmarshalYAML implements custom unmarshaling to support both string and object syntax
 func (h *HeadingPattern) UnmarshalYAML(node *yaml.Node) error {
-	// Support simple string syntax: "## Features"
+	// Support simple string syntax: "## Features" (literal match)
 	if node.Kind == yaml.ScalarNode {
-		h.Pattern = node.Value
-		h.Regex = false
+		h.Literal = node.Value
 		return nil
 	}
 
-	// Object syntax: { pattern: "## .*", regex: true }
+	// Object syntax: { pattern: "## .*" } or { expr: "..." }
 	type headingPatternAlias HeadingPattern
 	alias := (*headingPatternAlias)(h)
 	return node.Decode(alias)
@@ -217,12 +216,7 @@ func (HeadingPattern) JSONSchema() *jsonschema.Schema {
 	props := jsonschema.NewProperties()
 	props.Set("pattern", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Heading text or regex pattern to match",
-	})
-	props.Set("regex", &jsonschema.Schema{
-		Type:        "boolean",
-		Description: "Treat pattern as regular expression",
-		Default:     false,
+		Description: "Heading regex pattern to match",
 	})
 	props.Set("expr", &jsonschema.Schema{
 		Type:        "string",
@@ -231,12 +225,12 @@ func (HeadingPattern) JSONSchema() *jsonschema.Schema {
 
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
-			{Type: "string", Description: "Simple heading text (e.g., '## Features')"},
+			{Type: "string", Description: "Simple heading text for literal match (e.g., '## Features')"},
 			{
 				Type:                 "object",
 				Properties:           props,
 				AdditionalProperties: jsonschema.FalseSchema,
-				Description:          "Heading pattern with optional regex or expression support",
+				Description:          "Heading pattern with regex or expression support",
 			},
 		},
 		Description: "Heading pattern",
@@ -269,23 +263,22 @@ type SectionRules struct {
 
 // RequiredTextPattern defines a required text pattern with optional regex support
 type RequiredTextPattern struct {
-	// Pattern is the text or regex pattern to match
-	Pattern string `yaml:"pattern,omitempty" json:"pattern,omitempty" lc:"text or regex to match"`
+	// Literal is set when using scalar form (e.g., required_text: "text") - substring match
+	Literal string `yaml:"-" json:"-"`
 
-	// Regex indicates the pattern should be treated as a regular expression
-	Regex bool `yaml:"regex,omitempty" json:"regex,omitempty" lc:"treat as regex"`
+	// Pattern is the regex pattern to match (always treated as regex)
+	Pattern string `yaml:"pattern,omitempty" json:"pattern,omitempty" lc:"regex pattern to match"`
 }
 
 // UnmarshalYAML implements custom unmarshaling to support both string and object syntax
 func (r *RequiredTextPattern) UnmarshalYAML(node *yaml.Node) error {
-	// Support simple string syntax: "some text"
+	// Support simple string syntax: "some text" (literal substring match)
 	if node.Kind == yaml.ScalarNode {
-		r.Pattern = node.Value
-		r.Regex = false
+		r.Literal = node.Value
 		return nil
 	}
 
-	// Object syntax: { pattern: "...", regex: true }
+	// Object syntax: { pattern: "..." }
 	type requiredTextPatternAlias RequiredTextPattern
 	alias := (*requiredTextPatternAlias)(r)
 	return node.Decode(alias)
@@ -296,22 +289,17 @@ func (RequiredTextPattern) JSONSchema() *jsonschema.Schema {
 	props := jsonschema.NewProperties()
 	props.Set("pattern", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Text or regex to match",
-	})
-	props.Set("regex", &jsonschema.Schema{
-		Type:        "boolean",
-		Description: "Treat as regex",
-		Default:     false,
+		Description: "Regex pattern to match",
 	})
 
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
-			{Type: "string", Description: "Simple text to match"},
+			{Type: "string", Description: "Simple text to match (substring)"},
 			{
 				Type:                 "object",
 				Properties:           props,
 				AdditionalProperties: jsonschema.FalseSchema,
-				Description:          "Pattern with optional regex support",
+				Description:          "Regex pattern to match",
 			},
 		},
 		Description: "Required text pattern",
@@ -327,23 +315,22 @@ type CodeBlockRule struct {
 
 // ForbiddenTextPattern defines a text pattern that must NOT appear
 type ForbiddenTextPattern struct {
-	// Pattern is the text or regex pattern to match
-	Pattern string `yaml:"pattern,omitempty" json:"pattern,omitempty" lc:"text or regex that must NOT appear"`
+	// Literal is set when using scalar form (e.g., forbidden_text: "TODO") - substring match
+	Literal string `yaml:"-" json:"-"`
 
-	// Regex indicates the pattern should be treated as a regular expression
-	Regex bool `yaml:"regex,omitempty" json:"regex,omitempty" lc:"treat as regex"`
+	// Pattern is the regex pattern to match (always treated as regex)
+	Pattern string `yaml:"pattern,omitempty" json:"pattern,omitempty" lc:"regex pattern that must NOT appear"`
 }
 
 // UnmarshalYAML implements custom unmarshaling to support both string and object syntax
 func (f *ForbiddenTextPattern) UnmarshalYAML(node *yaml.Node) error {
-	// Support simple string syntax: "TODO"
+	// Support simple string syntax: "TODO" (literal substring match)
 	if node.Kind == yaml.ScalarNode {
-		f.Pattern = node.Value
-		f.Regex = false
+		f.Literal = node.Value
 		return nil
 	}
 
-	// Object syntax: { pattern: "...", regex: true }
+	// Object syntax: { pattern: "..." }
 	type forbiddenTextPatternAlias ForbiddenTextPattern
 	alias := (*forbiddenTextPatternAlias)(f)
 	return node.Decode(alias)
@@ -354,22 +341,17 @@ func (ForbiddenTextPattern) JSONSchema() *jsonschema.Schema {
 	props := jsonschema.NewProperties()
 	props.Set("pattern", &jsonschema.Schema{
 		Type:        "string",
-		Description: "Text or regex that must NOT appear",
-	})
-	props.Set("regex", &jsonschema.Schema{
-		Type:        "boolean",
-		Description: "Treat as regex",
-		Default:     false,
+		Description: "Regex pattern that must NOT appear",
 	})
 
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
-			{Type: "string", Description: "Simple text that must not appear"},
+			{Type: "string", Description: "Simple text that must not appear (substring)"},
 			{
 				Type:                 "object",
 				Properties:           props,
 				AdditionalProperties: jsonschema.FalseSchema,
-				Description:          "Pattern with optional regex support",
+				Description:          "Regex pattern that must not appear",
 			},
 		},
 		Description: "Forbidden text pattern",

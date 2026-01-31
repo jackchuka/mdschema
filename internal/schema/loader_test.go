@@ -32,8 +32,8 @@ func TestLoadValidSchema(t *testing.T) {
 		t.Errorf("expected 2 structure elements, got %d", len(schema.Structure))
 	}
 
-	if schema.Structure[0].Heading.Pattern != "# Title" {
-		t.Errorf("Structure[0].Heading.Pattern = %q, want %q", schema.Structure[0].Heading.Pattern, "# Title")
+	if schema.Structure[0].Heading.Literal != "# Title" {
+		t.Errorf("Structure[0].Heading.Literal = %q, want %q", schema.Structure[0].Heading.Literal, "# Title")
 	}
 
 	if !schema.Structure[1].Optional {
@@ -102,8 +102,8 @@ func TestLoadSchemaWithChildren(t *testing.T) {
 		t.Fatalf("expected 2 children, got %d", len(schema.Structure[0].Children))
 	}
 
-	if schema.Structure[0].Children[0].Heading.Pattern != "## Child" {
-		t.Errorf("Children[0].Heading.Pattern = %q, want %q", schema.Structure[0].Children[0].Heading.Pattern, "## Child")
+	if schema.Structure[0].Children[0].Heading.Literal != "## Child" {
+		t.Errorf("Children[0].Heading.Literal = %q, want %q", schema.Structure[0].Children[0].Heading.Literal, "## Child")
 	}
 
 	if !schema.Structure[0].Children[1].Optional {
