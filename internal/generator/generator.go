@@ -36,7 +36,7 @@ func (g *Generator) Generate(s *schema.Schema) string {
 // generateElement recursively generates markdown for a structure element
 func (g *Generator) generateElement(builder *strings.Builder, element schema.StructureElement, level int) {
 	// Generate heading - extract text from schema pattern
-	headingText := g.extractHeadingText(element.Heading.Pattern)
+	headingText := g.extractHeadingText(element.Heading.GetReadableName())
 	heading := strings.Repeat("#", level) + " " + headingText
 	builder.WriteString(heading + "\n\n")
 

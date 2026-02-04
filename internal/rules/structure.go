@@ -139,13 +139,7 @@ func (r *StructureRule) checkCountForElements(elements []schema.StructureElement
 		maxMatches := element.Count.Max
 
 		// Get a readable element name
-		elementName := element.Heading.Pattern
-		if elementName == "" {
-			elementName = element.Heading.Literal
-		}
-		if elementName == "" {
-			elementName = element.Heading.Expr
-		}
+		elementName := element.Heading.GetReadableName()
 
 		// Check minimum constraint
 		if count < minMatches {
@@ -378,7 +372,7 @@ func (r *StructureRule) GenerateContent(builder *strings.Builder, element schema
 			if child.Optional {
 				status = "optional"
 			}
-			fmt.Fprintf(builder, "<!-- %d. %s (%s) -->\n", i+1, child.Heading.Pattern, status)
+			fmt.Fprintf(builder, "<!-- %d. %s (%s) -->\n", i+1, child.Heading.GetReadableName(), status)
 		}
 		builder.WriteString("\n")
 	}

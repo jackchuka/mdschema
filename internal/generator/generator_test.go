@@ -304,3 +304,41 @@ func TestGenerateNoFrontmatter(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateLiteral(t *testing.T) {
+	g := New()
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{Literal: "# Title"},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Literal: "## Required Child"}},
+					{Heading: schema.HeadingPattern{Literal: "## Optional Child"}, Optional: true},
+				},
+			},
+		},
+	}
+
+	output := g.Generate(s)
+
+	if !strings.Contains(output, "# Title") {
+		t.Error("Generated output should contain parent heading")
+	}
+
+	if !strings.Contains(output, "## Required Child") {
+		t.Error("Generated output should contain required child heading")
+	}
+
+	if !strings.Contains(output, "## Optional Child") {
+		t.Error("Generated output should contain optional child heading")
+	}
+
+	if !strings.Contains(output, "<!-- 1. ## Required Child (required) -->") {
+		t.Error("Generated output should contain required child heading comment")
+	}
+
+	if !strings.Contains(output, "<!-- 2. ## Optional Child (optional) -->") {
+		t.Error("Generated output should contain optional child heading comment")
+	}
+}

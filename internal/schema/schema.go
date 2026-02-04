@@ -242,6 +242,18 @@ func (HeadingPattern) JSONSchema() *jsonschema.Schema {
 	}
 }
 
+// GetReadableName returns a human-readable title for HeadingPattern
+func (h *HeadingPattern) GetReadableName() string {
+	elementName := h.Pattern
+	if elementName == "" {
+		elementName = h.Literal
+	}
+	if elementName == "" {
+		elementName = h.Expr
+	}
+	return elementName
+}
+
 // SectionRules defines validation rules scoped to a specific heading/section
 type SectionRules struct {
 	// Required text/substrings within the section
