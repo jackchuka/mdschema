@@ -313,8 +313,8 @@ func TestGenerateLiteral(t *testing.T) {
 			{
 				Heading: schema.HeadingPattern{Literal: "# Title"},
 				Children: []schema.StructureElement{
-					{Heading: schema.HeadingPattern{Literal: "## Child"}},
-					{Heading: schema.HeadingPattern{Literal: "## Another Child"}},
+					{Heading: schema.HeadingPattern{Literal: "## Required Child"}},
+					{Heading: schema.HeadingPattern{Literal: "## Optional Child"}, Optional: true},
 				},
 			},
 		},
@@ -326,11 +326,19 @@ func TestGenerateLiteral(t *testing.T) {
 		t.Error("Generated output should contain parent heading")
 	}
 
-	if !strings.Contains(output, "## Child") {
-		t.Error("Generated output should contain child heading")
+	if !strings.Contains(output, "## Required Child") {
+		t.Error("Generated output should contain required child heading")
 	}
 
-	if !strings.Contains(output, "## Another Child") {
-		t.Error("Generated output should contain second child heading")
+	if !strings.Contains(output, "## Optional Child") {
+		t.Error("Generated output should contain optional child heading")
+	}
+
+	if !strings.Contains(output, "<!-- 1. ## Required Child (required) -->") {
+		t.Error("Generated output should contain required child heading comment")
+	}
+
+	if !strings.Contains(output, "<!-- 2. ## Optional Child (optional) -->") {
+		t.Error("Generated output should contain optional child heading comment")
 	}
 }

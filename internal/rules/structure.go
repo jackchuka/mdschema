@@ -372,7 +372,7 @@ func (r *StructureRule) GenerateContent(builder *strings.Builder, element schema
 			if child.Optional {
 				status = "optional"
 			}
-			fmt.Fprintf(builder, "<!-- %d. %s (%s) -->\n", i+1, child.Heading.Pattern, status)
+			fmt.Fprintf(builder, "<!-- %d. %s (%s) -->\n", i+1, child.Heading.GetReadableName(), status)
 		}
 		builder.WriteString("\n")
 	}
