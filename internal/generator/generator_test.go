@@ -304,3 +304,33 @@ func TestGenerateNoFrontmatter(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateLiteral(t *testing.T) {
+	g := New()
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{Literal: "# Title"},
+				Children: []schema.StructureElement{
+					{Heading: schema.HeadingPattern{Literal: "## Child"}},
+					{Heading: schema.HeadingPattern{Literal: "## Another Child"}},
+				},
+			},
+		},
+	}
+
+	output := g.Generate(s)
+
+	if !strings.Contains(output, "# Title") {
+		t.Error("Generated output should contain parent heading")
+	}
+
+	if !strings.Contains(output, "## Child") {
+		t.Error("Generated output should contain child heading")
+	}
+
+	if !strings.Contains(output, "## Another Child") {
+		t.Error("Generated output should contain second child heading")
+	}
+}

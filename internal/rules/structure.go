@@ -139,13 +139,7 @@ func (r *StructureRule) checkCountForElements(elements []schema.StructureElement
 		maxMatches := element.Count.Max
 
 		// Get a readable element name
-		elementName := element.Heading.Pattern
-		if elementName == "" {
-			elementName = element.Heading.Literal
-		}
-		if elementName == "" {
-			elementName = element.Heading.Expr
-		}
+		elementName := element.Heading.GetReadableName()
 
 		// Check minimum constraint
 		if count < minMatches {
