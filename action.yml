@@ -1,0 +1,66 @@
+name: "mdschema"
+description: "Validate Markdown files against schema definitions"
+author: "jackchuka"
+
+branding:
+  icon: "check-circle"
+  color: "blue"
+
+inputs:
+  version:
+    description: "mdschema version to install (e.g., v0.9.1, latest)"
+    required: false
+    default: "latest"
+  files:
+    description: "Files or glob patterns to validate"
+    required: false
+    default: "**/*.md"
+  schema:
+    description: "Path to schema file"
+    required: false
+    default: ".mdschema.yml"
+  args:
+    description: "Additional arguments to pass to mdschema"
+    required: false
+    default: ""
+  working-directory:
+    description: "Working directory for validation"
+    required: false
+    default: "."
+
+runs:
+  using: "composite"
+  steps:
+    - name: Determine version
+      id: version
+      shell: bash
+      run: |
+        if [ "${{ inputs.version }}" = "latest" ]; then
+          VERSION=$(curl -s https://api.github.com/repos/jackchuka/mdschema/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+        else
+          VERSION="${{ inputs.version }}"
+        fi
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+    - name: Download mdschema
+      shell: bash
+      run: |
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        case $ARCH in
+          x86_64) ARCH="amd64" ;;
+          aarch64|arm64) ARCH="arm64" ;;
+        esac
+
+        VERSION="${{ steps.version.outputs.version }}"
+        VERSION_NUM="${VERSION#v}"
+        URL="https://github.com/jackchuka/mdschema/releases/download/${VERSION}/mdschema_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
+
+        curl -sL "$URL" | tar xz -C /usr/local/bin mdschema
+        chmod +x /usr/local/bin/mdschema
+
+    - name: Run mdschema check
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        mdschema check ${{ inputs.files }} --schema ${{ inputs.schema }} ${{ inputs.args }}
