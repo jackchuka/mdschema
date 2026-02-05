@@ -1,0 +1,39 @@
+name: Test Action
+
+on:
+  push:
+    branches: [test-action, main]
+    paths:
+      - "action.yml"
+      - ".github/workflows/test-action.yml"
+  pull_request:
+    paths:
+      - "action.yml"
+      - ".github/workflows/test-action.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test mdschema action
+        uses: ./
+        with:
+          files: "README.md"
+          schema: ".mdschema.yml"
+
+  test-matrix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test with pinned version
+        uses: ./
+        with:
+          version: "v0.9.1"
+          files: "README.md"
+          schema: ".mdschema.yml"
