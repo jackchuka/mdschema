@@ -371,6 +371,53 @@ frontmatter:
 - **CI/CD Integration** - Validate documentation in pull requests
 - **Template Generation** - Create starter templates for new projects
 
+## GitHub Action
+
+Validate your Markdown files in CI/CD pipelines using the mdschema GitHub Action.
+
+### Basic Usage
+
+```yaml
+name: Validate Documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate markdown
+        uses: jackchuka/mdschema@v1
+        with:
+          files: "README.md docs/**/*.md"
+          schema: ".mdschema.yml"
+```
+
+### Inputs
+
+| Input               | Description                      | Default         |
+| ------------------- | -------------------------------- | --------------- |
+| `version`           | mdschema version (e.g., v0.9.1)  | `latest`        |
+| `files`             | Files or glob patterns           | `**/*.md`       |
+| `schema`            | Path to schema file              | `.mdschema.yml` |
+| `args`              | Additional CLI arguments         | (empty)         |
+| `working-directory` | Working directory for validation | `.`             |
+
+### Monorepo Example
+
+```yaml
+- uses: jackchuka/mdschema@v1
+  with:
+    working-directory: "./packages/docs"
+    files: "**/*.md"
+```
+
 ## Editor Support
 
 mdschema provides a [JSON Schema](https://json-schema.org/) for `.mdschema.yml` files, enabling auto-completion, validation, and hover documentation in editors that support YAML Language Server.
