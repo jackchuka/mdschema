@@ -8,9 +8,9 @@ branding:
 
 inputs:
   version:
-    description: "mdschema version to install (e.g., v0.9.1, latest)"
+    description: "mdschema version to install. Defaults to the action ref (e.g., @v0.9.1 uses v0.9.1). Use 'latest' to always get the newest release."
     required: false
-    default: "latest"
+    default: ""
   files:
     description: "Files or glob patterns to validate"
     required: false
@@ -35,11 +35,20 @@ runs:
       id: version
       shell: bash
       run: |
-        if [ "${{ inputs.version }}" = "latest" ]; then
-          VERSION=$(curl -s https://api.github.com/repos/jackchuka/mdschema/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+        INPUT_VERSION="${{ inputs.version }}"
+        ACTION_REF="${{ github.action_ref }}"
+
+        if [ -n "$INPUT_VERSION" ] && [ "$INPUT_VERSION" != "latest" ]; then
+          # Use explicitly specified version
+          VERSION="$INPUT_VERSION"
+        elif [ -n "$ACTION_REF" ] && [ "$INPUT_VERSION" != "latest" ]; then
+          # Use action ref (e.g., v0.9.1 from @v0.9.1)
+          VERSION="$ACTION_REF"
         else
-          VERSION="${{ inputs.version }}"
+          # Fallback to latest (for local dev with ./ or explicit 'latest')
+          VERSION=$(curl -s https://api.github.com/repos/jackchuka/mdschema/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
         fi
+
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
     - name: Download mdschema

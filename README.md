@@ -393,7 +393,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate markdown
-        uses: jackchuka/mdschema@v1
+        uses: jackchuka/mdschema@v0.9.1
         with:
           files: "README.md docs/**/*.md"
           schema: ".mdschema.yml"
@@ -401,18 +401,18 @@ jobs:
 
 ### Inputs
 
-| Input               | Description                      | Default         |
-| ------------------- | -------------------------------- | --------------- |
-| `version`           | mdschema version (e.g., v0.9.1)  | `latest`        |
-| `files`             | Files or glob patterns           | `**/*.md`       |
-| `schema`            | Path to schema file              | `.mdschema.yml` |
-| `args`              | Additional CLI arguments         | (empty)         |
-| `working-directory` | Working directory for validation | `.`             |
+| Input               | Description                                    | Default         |
+| ------------------- | ---------------------------------------------- | --------------- |
+| `version`           | mdschema CLI version (use `latest` for newest) | Action ref      |
+| `files`             | Files or glob patterns                         | `**/*.md`       |
+| `schema`            | Path to schema file                            | `.mdschema.yml` |
+| `args`              | Additional CLI arguments                       | (empty)         |
+| `working-directory` | Working directory for validation               | `.`             |
 
 ### Monorepo Example
 
 ```yaml
-- uses: jackchuka/mdschema@v1
+- uses: jackchuka/mdschema@v0.9.1
   with:
     working-directory: "./packages/docs"
     files: "**/*.md"
