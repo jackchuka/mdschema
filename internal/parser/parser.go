@@ -56,6 +56,7 @@ func (p *Parser) Parse(path string, content []byte) (*Document, error) {
 		frontMatter = &FrontMatter{
 			Format: "yaml",
 			Data:   metaData,
+			Links:  extractFrontmatterLinks(metaData),
 		}
 	}
 

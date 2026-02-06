@@ -96,6 +96,7 @@ type FrontMatter struct {
 	Format  string // "yaml" or "toml"
 	Content string
 	Data    map[string]any
+	Links   []*Link
 }
 
 // LineLocatable is implemented by elements that have a line position

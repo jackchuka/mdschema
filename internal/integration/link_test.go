@@ -47,6 +47,13 @@ func TestLinkValidation(t *testing.T) {
 			ShouldPass:   false,
 			ExpectedRule: "link",
 		},
+		{
+			Name:         "blocked domain in frontmatter URL",
+			FilePath:     testdataDir + "links/invalid_frontmatter_blocked_domain.md",
+			SchemaPath:   testdataDir + "links/.mdschema.yml",
+			ShouldPass:   false,
+			ExpectedRule: "link",
+		},
 	}
 
 	runTestCases(t, testCases)

@@ -48,6 +48,30 @@ func extractCodeBlock(node *ast.FencedCodeBlock, content []byte) *CodeBlock {
 	}
 }
 
+// extractFrontmatterLinks extracts link-like values from frontmatter data.
+func extractFrontmatterLinks(data map[string]any) []*Link {
+	if data == nil {
+		return nil
+	}
+
+	var links []*Link
+	for _, value := range data {
+		str, ok := value.(string)
+		if !ok {
+			continue
+		}
+		if strings.HasPrefix(str, "#") || strings.HasPrefix(str, "http://") || strings.HasPrefix(str, "https://") {
+			links = append(links, &Link{
+				URL:        str,
+				IsInternal: isInternalLink(str),
+				Line:       1,
+				Column:     1,
+			})
+		}
+	}
+	return links
+}
+
 func extractLink(node *ast.Link, content []byte) *Link {
 	// Use ast.Walk to recursively extract all text (handles emphasis, code, etc.)
 	var textBuf bytes.Buffer
