@@ -42,8 +42,11 @@ func (r *LinkValidationRule) ValidateWithContext(ctx *vast.Context) []Violation 
 
 	linkRule := ctx.Schema.Links
 
-	// Collect all links from the document (not just schema-matched sections)
+	// Collect all links from the document
 	links := r.collectAllLinks(ctx.Tree.Document.Root)
+	if fm := ctx.Tree.Document.FrontMatter; fm != nil {
+		links = append(links, fm.Links...)
+	}
 
 	// Get document directory for relative path resolution
 	docDir := filepath.Dir(ctx.Tree.Document.Path)

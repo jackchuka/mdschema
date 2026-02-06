@@ -454,6 +454,160 @@ func TestLinkValidationRootRelativePath(t *testing.T) {
 	}
 }
 
+func TestLinkValidationFrontmatterBlockedDomain(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("---\nrepo: https://blocked.com/repo\n---\n\n# Title\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			BlockedDomains: []string{"blocked.com"},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) == 0 {
+		t.Fatal("Expected violation for frontmatter URL to blocked domain")
+	}
+
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "blocked domain") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected violation mentioning blocked domain, got: %v", violations)
+	}
+}
+
+func TestLinkValidationFrontmatterAllowedDomains(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("---\nrepo: https://notallowed.com/repo\n---\n\n# Title\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			AllowedDomains: []string{"github.com"},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) == 0 {
+		t.Fatal("Expected violation for frontmatter URL not in allowed domains")
+	}
+}
+
+func TestLinkValidationFrontmatterAllowedDomainPass(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("---\nrepo: https://github.com/user/repo\n---\n\n# Title\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			AllowedDomains: []string{"github.com"},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Expected no violations for allowed domain, got %d: %v", len(violations), violations)
+	}
+}
+
+func TestLinkValidationFrontmatterNonStringSkipped(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("---\ncount: 123\n---\n\n# Title\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			BlockedDomains: []string{"blocked.com"},
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Expected no violations for non-URL frontmatter value, got %d", len(violations))
+	}
+}
+
+func TestLinkValidationFrontmatterInternalAnchor(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("---\nref: \"#nonexistent\"\n---\n\n# Title\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			ValidateInternal: true,
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) == 0 {
+		t.Fatal("Expected violation for broken anchor in frontmatter")
+	}
+
+	found := false
+	for _, v := range violations {
+		if strings.Contains(v.Message, "nonexistent") && strings.Contains(v.Message, "does not exist") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("Expected violation mentioning broken anchor, got: %v", violations)
+	}
+}
+
+func TestLinkValidationFrontmatterValidAnchor(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("---\nref: \"#details\"\n---\n\n# Title\n\n## Details\n\nSome content.\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			ValidateInternal: true,
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewLinkValidationRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Expected no violations for valid anchor in frontmatter, got %d: %v", len(violations), violations)
+	}
+}
+
 func TestLinkValidationRootRelativePathBroken(t *testing.T) {
 	tmpDir := t.TempDir()
 
