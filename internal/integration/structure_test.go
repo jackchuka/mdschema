@@ -62,6 +62,14 @@ func TestStructureValidation(t *testing.T) {
 			ShouldPass:   false,
 			ExpectedRule: "structure",
 		},
+
+		// No structure defined — should not produce structure violations
+		{
+			Name:       "no structure violations when structure is omitted from schema",
+			FilePath:   testdataDir + "schema_only/valid_any_headings.md",
+			SchemaPath: testdataDir + "schema_only/.mdschema.yml",
+			ShouldPass: true,
+		},
 	}
 
 	runTestCases(t, testCases)

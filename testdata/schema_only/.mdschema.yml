@@ -1,0 +1,7 @@
+# Schema with no structure defined — only non-structure rules
+links:
+  validate_internal: true
+  validate_files: true
+
+heading_rules:
+  max_level: 3
