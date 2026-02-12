@@ -42,6 +42,10 @@ func (r *StructureRule) Name() string {
 
 // ValidateWithContext validates using VAST (validation-ready AST)
 func (r *StructureRule) ValidateWithContext(ctx *vast.Context) []Violation {
+	if len(ctx.Schema.Structure) == 0 {
+		return nil
+	}
+
 	violations := make([]Violation, 0)
 
 	// Enforce that the first heading matches the first required element at each level.

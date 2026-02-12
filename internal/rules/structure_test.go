@@ -696,6 +696,32 @@ func TestStructureRuleExprREADME(t *testing.T) {
 	}
 }
 
+func TestStructureRuleSkipsWhenNoStructureDefined(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# Title\n\n## Section One\n\nSome content.\n\n## Section Two\n\nMore content.\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	// Schema with non-structure rules only, no structure defined
+	s := &schema.Schema{
+		Links: &schema.LinkRule{
+			ValidateInternal: true,
+		},
+	}
+
+	ctx := vast.NewContext(doc, s, "")
+	rule := NewStructureRule()
+	violations := rule.ValidateWithContext(ctx)
+
+	if len(violations) != 0 {
+		t.Errorf("Expected 0 violations when no structure defined, got %d:", len(violations))
+		for _, v := range violations {
+			t.Logf("  - %s", v.Message)
+		}
+	}
+}
+
 func TestStructureRuleExprExactMatch(t *testing.T) {
 	p := parser.New()
 	doc, err := p.Parse("README.md", []byte("# README\n\nContent."))
