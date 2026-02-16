@@ -3,7 +3,7 @@ module github.com/jackchuka/mdschema
 go 1.24.4
 
 require (
-	github.com/expr-lang/expr v1.17.7
+	github.com/expr-lang/expr v1.17.8
 	github.com/fatih/color v1.18.0
 	github.com/invopop/jsonschema v0.13.0
 	github.com/spf13/cobra v1.10.2
