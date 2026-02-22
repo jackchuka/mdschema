@@ -1,0 +1,21 @@
+{
+  "name": "@jackchuka/mdschema-linux-x64",
+  "version": "0.0.0",
+  "description": "mdschema pre-built binary for Linux x64",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jackchuka/mdschema.git"
+  },
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "bin": {
+    "mdschema": "bin/mdschema"
+  },
+  "files": ["bin/"],
+  "preferUnplugged": true
+}

@@ -28,3 +28,95 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  npm-publish:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Download and prepare platform binaries
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          declare -A PLATFORM_MAP=(
+            ["darwin-arm64"]="darwin_arm64"
+            ["darwin-x64"]="darwin_amd64"
+            ["linux-arm64"]="linux_arm64"
+            ["linux-x64"]="linux_amd64"
+            ["windows-arm64"]="windows_arm64"
+            ["windows-x64"]="windows_amd64"
+          )
+
+          for npm_name in "${!PLATFORM_MAP[@]}"; do
+            goreleaser_target="${PLATFORM_MAP[$npm_name]}"
+            os="${goreleaser_target%%_*}"
+            arch="${goreleaser_target##*_}"
+
+            mkdir -p "npm/${npm_name}/bin"
+
+            if [[ "$os" == "windows" ]]; then
+              archive="mdschema_${VERSION}_${os}_${arch}.zip"
+              gh release download "v${VERSION}" --pattern "$archive" --dir /tmp
+              unzip -o "/tmp/$archive" mdschema.exe -d "npm/${npm_name}/bin/"
+            else
+              archive="mdschema_${VERSION}_${os}_${arch}.tar.gz"
+              gh release download "v${VERSION}" --pattern "$archive" --dir /tmp
+              tar xzf "/tmp/$archive" -C "npm/${npm_name}/bin/" mdschema
+              chmod +x "npm/${npm_name}/bin/mdschema"
+            fi
+          done
+
+      - name: Set package versions
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          # Update all platform packages
+          for dir in npm/darwin-arm64 npm/darwin-x64 npm/linux-arm64 npm/linux-x64 npm/windows-arm64 npm/windows-x64; do
+            cd "$dir"
+            npm version "$VERSION" --no-git-tag-version --allow-same-version
+            cd "$GITHUB_WORKSPACE"
+          done
+
+          # Update main package and its optionalDependencies
+          cd npm/mdschema
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          # Update optionalDependencies versions using node
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            for (const dep of Object.keys(pkg.optionalDependencies)) {
+              pkg.optionalDependencies[dep] = process.env.VERSION;
+            }
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          cd "$GITHUB_WORKSPACE"
+
+      - name: Publish platform packages
+        run: |
+          for dir in npm/darwin-arm64 npm/darwin-x64 npm/linux-arm64 npm/linux-x64 npm/windows-arm64 npm/windows-x64; do
+            cd "$dir"
+            npm publish --access public --provenance
+            cd "$GITHUB_WORKSPACE"
+          done
+
+      - name: Publish main package
+        run: |
+          cd npm/mdschema
+          npm publish --access public --provenance
