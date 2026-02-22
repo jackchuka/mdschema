@@ -1,7 +1,3 @@
 /mdschema
 /mdschema.exe
 /tmp
-# Platform package binaries (injected by CI)
-npm/*/bin/
-# Allow the main wrapper's CLI script
-!npm/mdschema/bin/cli.js
