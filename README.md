@@ -34,6 +34,18 @@ mdschema check README.md --schema ./examples/README-schema.yml
 brew install jackchuka/tap/mdschema
 ```
 
+### npm
+
+```bash
+npm install -g @jackchuka/mdschema
+```
+
+Or run directly with npx:
+
+```bash
+npx @jackchuka/mdschema check README.md --schema .mdschema.yml
+```
+
 ### Go Install
 
 ```bash

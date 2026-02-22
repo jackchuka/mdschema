@@ -1,0 +1,30 @@
+{
+  "name": "@jackchuka/mdschema",
+  "version": "0.0.0",
+  "description": "A declarative schema-based Markdown documentation validator",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jackchuka/mdschema.git"
+  },
+  "homepage": "https://github.com/jackchuka/mdschema",
+  "keywords": ["markdown", "validator", "schema", "documentation", "lint"],
+  "engines": {
+    "node": ">=14"
+  },
+  "files": ["bin/cli.js", "lib/", "install.js"],
+  "bin": {
+    "mdschema": "bin/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "optionalDependencies": {
+    "@jackchuka/mdschema-darwin-arm64": "0.0.0",
+    "@jackchuka/mdschema-darwin-x64": "0.0.0",
+    "@jackchuka/mdschema-linux-arm64": "0.0.0",
+    "@jackchuka/mdschema-linux-x64": "0.0.0",
+    "@jackchuka/mdschema-windows-arm64": "0.0.0",
+    "@jackchuka/mdschema-windows-x64": "0.0.0"
+  }
+}
