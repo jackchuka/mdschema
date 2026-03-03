@@ -67,7 +67,7 @@ func (r *StructureRule) ValidateWithContext(ctx *vast.Context) []Violation {
 			}
 
 			violations = append(violations,
-				NewViolation(r.Name(), fmt.Sprintf("Required element %q not found within %q", n.Element.Heading.Pattern, parentName), line, col).
+				NewViolation(r.Name(), fmt.Sprintf("Required element %q not found within %q", n.Element.Heading.GetReadableName(), parentName), line, col).
 					WithSeverity(severityFromSchema(n.Element.Severity)))
 		}
 		return true
