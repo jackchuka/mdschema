@@ -1,6 +1,6 @@
 module github.com/jackchuka/mdschema
 
-go 1.24.4
+go 1.26.1
 
 require (
 	github.com/expr-lang/expr v1.17.8
