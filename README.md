@@ -372,8 +372,36 @@ frontmatter:
     - { name: "repo", optional: true, format: url }
 ```
 
-**Field types:** `string`, `number`, `boolean`, `array`, `date`
+**Field types:** `string`, `number`, `boolean`, `array`, `date`, `object`
 **Field formats:** `date` (YYYY-MM-DD), `email`, `url`
+
+##### Nested Frontmatter Keys
+
+Use dot-notation in `name` to validate nested keys:
+
+```yaml
+frontmatter:
+  fields:
+    - { name: "title" }
+    - { name: "metadata", type: object }
+    - { name: "metadata.author" }
+    - { name: "metadata.version" }
+    - { name: "metadata.homepage", optional: true, format: url }
+```
+
+Validates a document like:
+
+```yaml
+---
+title: My Document
+metadata:
+  author: example-org
+  version: "1.0"
+---
+```
+
+If a key segment contains a literal dot, escape it with a backslash:
+`name: "weird\\.key"`.
 
 ## Use Cases
 

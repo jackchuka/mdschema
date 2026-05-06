@@ -389,3 +389,200 @@ func TestFrontmatterNoFrontmatter(t *testing.T) {
 		t.Error("FrontMatter should be nil when not present")
 	}
 }
+
+func TestFrontmatterRuleNestedFields(t *testing.T) {
+	const agentSkills = `---
+name: my-skill
+metadata:
+  author: example-org
+  version: "1.0"
+---
+
+# Title
+`
+
+	tests := []struct {
+		name              string
+		content           string
+		fields            []schema.FrontmatterField
+		wantViolation     bool
+		wantMessageSubstr string
+	}{
+		{
+			name:    "nested keys present",
+			content: agentSkills,
+			fields: []schema.FrontmatterField{
+				{Name: "name"},
+				{Name: "metadata.author"},
+				{Name: "metadata.version"},
+			},
+		},
+		{
+			name:    "nested key missing",
+			content: "---\nname: x\nmetadata:\n  version: \"1.0\"\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata.author"},
+			},
+			wantViolation:     true,
+			wantMessageSubstr: "metadata.author",
+		},
+		{
+			name:    "parent missing for nested key",
+			content: "---\nname: x\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata.author"},
+			},
+			wantViolation:     true,
+			wantMessageSubstr: "metadata.author",
+		},
+		{
+			name:    "nested key optional missing",
+			content: "---\nname: x\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata.author", Optional: true},
+			},
+		},
+		{
+			name:    "nested key wrong type",
+			content: "---\nmetadata:\n  version: 1.0\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata.version", Type: schema.FieldTypeString},
+			},
+			wantViolation:     true,
+			wantMessageSubstr: "string",
+		},
+		{
+			name:    "object type on parent",
+			content: "---\nmetadata:\n  author: x\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata", Type: schema.FieldTypeObject},
+			},
+		},
+		{
+			name:    "object type rejects scalar",
+			content: "---\nmetadata: just-a-string\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata", Type: schema.FieldTypeObject},
+			},
+			wantViolation:     true,
+			wantMessageSubstr: "object",
+		},
+		{
+			name:    "scalar parent rejects nested lookup",
+			content: "---\nmetadata: just-a-string\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata.author"},
+			},
+			wantViolation:     true,
+			wantMessageSubstr: "metadata.author",
+		},
+		{
+			name:    "format on nested url",
+			content: "---\nmetadata:\n  homepage: not-a-url\n---\n\n# T\n",
+			fields: []schema.FrontmatterField{
+				{Name: "metadata.homepage", Format: schema.FieldFormatURL},
+			},
+			wantViolation:     true,
+			wantMessageSubstr: "URL",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := parser.New()
+			doc, err := p.Parse("test.md", []byte(tt.content))
+			if err != nil {
+				t.Fatalf("Parse() error: %v", err)
+			}
+
+			s := &schema.Schema{
+				Frontmatter: &schema.FrontmatterConfig{Fields: tt.fields},
+			}
+
+			ctx := vast.NewContext(doc, s, "")
+			rule := NewFrontmatterRule()
+			violations := rule.ValidateWithContext(ctx)
+
+			if tt.wantViolation {
+				if len(violations) == 0 {
+					t.Fatalf("expected violation, got none")
+				}
+				found := false
+				for _, v := range violations {
+					if strings.Contains(v.Message, tt.wantMessageSubstr) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("expected violation containing %q, got %+v", tt.wantMessageSubstr, violations)
+				}
+				return
+			}
+			if len(violations) != 0 {
+				t.Errorf("expected no violations, got %+v", violations)
+			}
+		})
+	}
+}
+
+func TestSplitFieldPath(t *testing.T) {
+	tests := []struct {
+		input string
+		want  []string
+	}{
+		{"author", []string{"author"}},
+		{"metadata.author", []string{"metadata", "author"}},
+		{"a.b.c", []string{"a", "b", "c"}},
+		{`weird\.key`, []string{"weird.key"}},
+		{`a.b\.c.d`, []string{"a", "b.c", "d"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got := splitFieldPath(tt.input)
+			if len(got) != len(tt.want) {
+				t.Fatalf("got %v, want %v", got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Fatalf("got %v, want %v", got, tt.want)
+				}
+			}
+		})
+	}
+}
+
+func TestFrontmatterRuleGenerateNested(t *testing.T) {
+	rule := NewFrontmatterRule()
+	var builder strings.Builder
+
+	s := &schema.Schema{
+		Frontmatter: &schema.FrontmatterConfig{
+			Fields: []schema.FrontmatterField{
+				{Name: "name", Type: schema.FieldTypeString},
+				{Name: "metadata.author", Type: schema.FieldTypeString},
+				{Name: "metadata.version", Type: schema.FieldTypeString},
+				{Name: "metadata.homepage", Optional: true, Format: schema.FieldFormatURL},
+			},
+		},
+	}
+
+	if !rule.Generate(&builder, s) {
+		t.Fatal("Generate should return true")
+	}
+
+	output := builder.String()
+	wantSubstrings := []string{
+		"---\n",
+		"name: \"TODO\" # required",
+		"metadata: # required",
+		"  author: \"TODO\" # required",
+		"  version: \"TODO\" # required",
+		"  homepage: https://example.com",
+	}
+	for _, s := range wantSubstrings {
+		if !strings.Contains(output, s) {
+			t.Errorf("output missing %q\nGot:\n%s", s, output)
+		}
+	}
+}
