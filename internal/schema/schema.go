@@ -463,14 +463,15 @@ const (
 	FieldTypeBoolean FieldType = "boolean"
 	FieldTypeArray   FieldType = "array"
 	FieldTypeDate    FieldType = "date"
+	FieldTypeObject  FieldType = "object"
 )
 
 // JSONSchema implements jsonschema.JSONSchemer to add enum constraint
 func (FieldType) JSONSchema() *jsonschema.Schema {
 	return &jsonschema.Schema{
 		Type:        "string",
-		Enum:        []any{"string", "number", "boolean", "array", "date"},
-		Description: "Field type: string, number, boolean, array, or date",
+		Enum:        []any{"string", "number", "boolean", "array", "date", "object"},
+		Description: "Field type: string, number, boolean, array, date, or object",
 	}
 }
 
@@ -495,8 +496,10 @@ func (FieldFormat) JSONSchema() *jsonschema.Schema {
 
 // FrontmatterField defines a single frontmatter field requirement
 type FrontmatterField struct {
-	// Name is the field name (required)
-	Name string `yaml:"name" json:"name" lc:"field name"`
+	// Name is the field name (required). Supports dot-notation for nested
+	// frontmatter keys, e.g., "metadata.author". Path segments containing a
+	// literal dot can be escaped with a backslash, e.g., "weird\\.key".
+	Name string `yaml:"name" json:"name" lc:"field name (dot-notation for nested keys, e.g. 'metadata.author')"`
 
 	// Optional indicates whether this field is not required (default: false = required)
 	Optional bool `yaml:"optional,omitempty" json:"optional,omitempty" lc:"field is not required"`
