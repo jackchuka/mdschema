@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/jackchuka/mdschema/internal/parser"
@@ -78,5 +79,49 @@ func TestParagraphRuleMaxFails(t *testing.T) {
 	}
 	if want := "Section 'Overview' has too many paragraphs (maximum 2, found 3)"; v[0].Message != want {
 		t.Errorf("message = %q, want %q", v[0].Message, want)
+	}
+}
+
+func TestParagraphRuleGenerateContent(t *testing.T) {
+	rule := NewParagraphRule()
+	var builder strings.Builder
+
+	element := schema.StructureElement{
+		Heading: schema.HeadingPattern{Pattern: "## Overview"},
+		SectionRules: &schema.SectionRules{
+			Paragraphs: &schema.ParagraphRule{Min: 1, Max: 3},
+		},
+	}
+
+	result := rule.GenerateContent(&builder, element)
+
+	if !result {
+		t.Error("GenerateContent() should return true when paragraph rules exist")
+	}
+
+	content := builder.String()
+	if !strings.Contains(content, "<!-- Paragraph requirements: -->") {
+		t.Error("Should generate paragraph requirements header")
+	}
+	if !strings.Contains(content, "<!-- Minimum 1 paragraphs required -->") {
+		t.Error("Should generate minimum paragraphs comment")
+	}
+	if !strings.Contains(content, "<!-- Maximum 3 paragraphs allowed -->") {
+		t.Error("Should generate maximum paragraphs comment")
+	}
+}
+
+func TestParagraphRuleGenerateContentNoRules(t *testing.T) {
+	rule := NewParagraphRule()
+	var builder strings.Builder
+
+	element := schema.StructureElement{
+		Heading: schema.HeadingPattern{Pattern: "## Overview"},
+	}
+
+	result := rule.GenerateContent(&builder, element)
+
+	if result {
+		t.Error("GenerateContent() should return false when no paragraph rules")
 	}
 }

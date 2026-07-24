@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/jackchuka/mdschema/main/schema.json
+#
+# Schema for paragraph rule tests
+structure:
+  - heading:
+      pattern: "# .*"
+    optional: true
+    children:
+      - heading: "## Overview"
+        paragraphs:
+          min: 1
