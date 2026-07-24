@@ -17,6 +17,7 @@ func (p *Parser) buildHierarchicalSections(headings []*Heading, codeBlocks []*Co
 		Links:      make([]*Link, 0),
 		Images:     make([]*Image, 0),
 		Lists:      make([]*List, 0),
+		Paragraphs: make([]*Paragraph, 0),
 	}
 
 	// Stack to track current nesting level
@@ -34,6 +35,7 @@ func (p *Parser) buildHierarchicalSections(headings []*Heading, codeBlocks []*Co
 			Links:      make([]*Link, 0),
 			Images:     make([]*Image, 0),
 			Lists:      make([]*List, 0),
+			Paragraphs: make([]*Paragraph, 0),
 		}
 
 		// Find appropriate parent based on heading level

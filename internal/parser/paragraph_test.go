@@ -12,6 +12,7 @@ First prose paragraph.
 Second prose paragraph.
 
 - a bullet
+
 - another bullet
 
 > a blockquote paragraph
