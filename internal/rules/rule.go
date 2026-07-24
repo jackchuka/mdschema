@@ -47,6 +47,7 @@ func defaultStructuralRules() []StructuralRule {
 		NewTableRule(),
 		NewListRule(),
 		NewWordCountRule(),
+		NewParagraphRule(),
 	}
 }
 
