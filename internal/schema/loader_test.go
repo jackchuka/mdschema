@@ -19,7 +19,7 @@ func TestLoadValidSchema(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	schema, err := Load(schemaFile)
+	schema, _, err := Load(schemaFile)
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
@@ -56,7 +56,7 @@ func TestLoadSchemaWithRules(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	schema, err := Load(schemaFile)
+	schema, _, err := Load(schemaFile)
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
@@ -93,7 +93,7 @@ func TestLoadSchemaWithChildren(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	schema, err := Load(schemaFile)
+	schema, _, err := Load(schemaFile)
 	if err != nil {
 		t.Fatalf("Load() error: %v", err)
 	}
@@ -120,14 +120,14 @@ func TestLoadInvalidYAML(t *testing.T) {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
-	_, err := Load(schemaFile)
+	_, _, err := Load(schemaFile)
 	if err == nil {
 		t.Error("Load() should return error for invalid YAML")
 	}
 }
 
 func TestLoadNonexistentFile(t *testing.T) {
-	_, err := Load("/nonexistent/path/schema.yml")
+	_, _, err := Load("/nonexistent/path/schema.yml")
 	if err == nil {
 		t.Error("Load() should return error for nonexistent file")
 	}
