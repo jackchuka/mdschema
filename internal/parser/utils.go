@@ -29,6 +29,10 @@ func getPosition(node ast.Node, content []byte) (line, col int) {
 		if n.Lines().Len() > 0 {
 			return calculateLineColumn(content, n.Lines().At(0).Start)
 		}
+	case *ast.Paragraph:
+		if n.Lines().Len() > 0 {
+			return calculateLineColumn(content, n.Lines().At(0).Start)
+		}
 	}
 
 	// Fallback to finding the first text node

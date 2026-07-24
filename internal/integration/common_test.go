@@ -25,7 +25,7 @@ func runTestCases(t *testing.T, testCases []TestCase) {
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
 			// Load schema
-			s, err := schema.Load(tc.SchemaPath)
+			s, _, err := schema.Load(tc.SchemaPath)
 			if err != nil {
 				t.Fatalf("Failed to load schema %s: %v", tc.SchemaPath, err)
 			}

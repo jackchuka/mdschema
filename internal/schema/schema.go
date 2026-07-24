@@ -173,6 +173,7 @@ func (StructureElement) JSONSchema() *jsonschema.Schema {
 		Items:       &jsonschema.Schema{Ref: "#/$defs/ListRule"},
 	})
 	props.Set("word_count", &jsonschema.Schema{Ref: "#/$defs/WordCountRule", Description: "Word count constraints"})
+	props.Set("paragraphs", &jsonschema.Schema{Ref: "#/$defs/ParagraphRule", Description: "Paragraph count constraints"})
 
 	return &jsonschema.Schema{
 		OneOf: []*jsonschema.Schema{
@@ -276,6 +277,9 @@ type SectionRules struct {
 
 	// Word count requirements for the section
 	WordCount *WordCountRule `yaml:"word_count,omitempty" json:"word_count,omitempty" lc:"word count constraints"`
+
+	// Paragraph count requirements for the section
+	Paragraphs *ParagraphRule `yaml:"paragraphs,omitempty" json:"paragraphs,omitempty" lc:"paragraph count constraints"`
 }
 
 // RequiredTextPattern defines a required text pattern with optional regex support
@@ -421,6 +425,12 @@ type ListRule struct {
 type WordCountRule struct {
 	Min int `yaml:"min,omitempty" json:"min,omitempty" lc:"minimum words"`
 	Max int `yaml:"max,omitempty" json:"max,omitempty" lc:"maximum words"`
+}
+
+// ParagraphRule defines paragraph-count requirements for a section
+type ParagraphRule struct {
+	Min int `yaml:"min,omitempty" json:"min,omitempty" lc:"minimum paragraphs"`
+	Max int `yaml:"max,omitempty" json:"max,omitempty" lc:"maximum paragraphs"`
 }
 
 // CountConstraint defines how many times a structure element can match

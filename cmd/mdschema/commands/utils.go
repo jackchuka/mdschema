@@ -10,26 +10,38 @@ import (
 
 // loadSchema loads a schema based on config or discovery
 func loadSchema(cfg *Config) (*schema.Schema, string, error) {
+	var loaded *schema.Schema
+	var warnings []schema.Warning
+	var path string
+	var err error
+
 	if cfg.SchemaFile != "" {
-		// Load explicitly specified schema
-		loaded, err := schema.Load(cfg.SchemaFile)
+		loaded, warnings, err = schema.Load(cfg.SchemaFile)
 		if err != nil {
 			return nil, "", fmt.Errorf("loading schema %s: %w", cfg.SchemaFile, err)
 		}
-		return loaded, cfg.SchemaFile, nil
+		path = cfg.SchemaFile
+	} else {
+		schemaPath, ferr := schema.FindSchema(".")
+		if ferr != nil {
+			return nil, "", fmt.Errorf("finding schema: %w", ferr)
+		}
+		loaded, warnings, err = schema.Load(schemaPath)
+		if err != nil {
+			return nil, "", fmt.Errorf("loading discovered schema: %w", err)
+		}
+		path = schemaPath
 	}
 
-	// Try to discover schema in current directory
-	schemaPath, err := schema.FindSchema(".")
-	if err != nil {
-		return nil, "", fmt.Errorf("finding schema: %w", err)
-	}
+	printSchemaWarnings(path, warnings)
+	return loaded, path, nil
+}
 
-	loaded, err := schema.Load(schemaPath)
-	if err != nil {
-		return nil, "", fmt.Errorf("loading discovered schema: %w", err)
+// printSchemaWarnings prints non-fatal schema load warnings to stderr.
+func printSchemaWarnings(path string, warnings []schema.Warning) {
+	for _, w := range warnings {
+		fmt.Fprintf(os.Stderr, "warning: %s: %s at line %d\n", path, w.Message, w.Line)
 	}
-	return loaded, schemaPath, nil
 }
 
 const (

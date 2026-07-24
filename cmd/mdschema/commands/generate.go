@@ -40,10 +40,12 @@ func runGenerate(cfg *Config, schemaFile, outputFile string) error {
 	var err error
 
 	if schemaFile != "" {
-		s, err = schema.Load(schemaFile)
+		var warnings []schema.Warning
+		s, warnings, err = schema.Load(schemaFile)
 		if err != nil {
 			return fmt.Errorf("loading schema from %s: %w", schemaFile, err)
 		}
+		printSchemaWarnings(schemaFile, warnings)
 	} else {
 		// Load schema using existing utility
 		s, _, err = loadSchema(cfg)

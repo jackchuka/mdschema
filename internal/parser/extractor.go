@@ -108,6 +108,14 @@ func extractList(node *ast.List, content []byte) *List {
 	return list
 }
 
+func extractParagraph(node *ast.Paragraph, content []byte) *Paragraph {
+	line, col := getPosition(node, content)
+	return &Paragraph{
+		Line:   line,
+		Column: col,
+	}
+}
+
 func extractTable(node *east.Table, content []byte) *Table {
 	headers := make([]string, 0)
 

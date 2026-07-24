@@ -8,24 +8,29 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Load reads and parses a schema file
-func Load(path string) (*Schema, error) {
+// Load reads and parses a schema file, returning any non-fatal warnings.
+func Load(path string) (*Schema, []Warning, error) {
 	return simpleLoadYAML(path)
 }
 
-// simpleLoadYAML loads a schema from a YAML file
-func simpleLoadYAML(path string) (*Schema, error) {
+// simpleLoadYAML loads a schema from a YAML file.
+func simpleLoadYAML(path string) (*Schema, []Warning, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("reading schema file: %w", err)
+		return nil, nil, fmt.Errorf("reading schema file: %w", err)
 	}
 
 	var schema Schema
 	if err := yaml.Unmarshal(data, &schema); err != nil {
-		return nil, fmt.Errorf("parsing schema YAML: %w", err)
+		return nil, nil, fmt.Errorf("parsing schema YAML: %w", err)
 	}
 
-	return &schema, nil
+	warnings, err := checkUnknownKeys(data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("checking schema keys: %w", err)
+	}
+
+	return &schema, warnings, nil
 }
 
 // FindSchema discovers schema files in the directory hierarchy

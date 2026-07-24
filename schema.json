@@ -207,6 +207,20 @@
       "additionalProperties": false,
       "type": "object"
     },
+    "ParagraphRule": {
+      "properties": {
+        "min": {
+          "type": "integer",
+          "description": "Minimum paragraphs"
+        },
+        "max": {
+          "type": "integer",
+          "description": "Maximum paragraphs"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "Schema": {
       "properties": {
         "structure": {
@@ -378,6 +392,10 @@
             "word_count": {
               "$ref": "#/$defs/WordCountRule",
               "description": "Word count constraints"
+            },
+            "paragraphs": {
+              "$ref": "#/$defs/ParagraphRule",
+              "description": "Paragraph count constraints"
             }
           },
           "additionalProperties": false,
