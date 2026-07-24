@@ -38,7 +38,7 @@ func checkUnknownKeys(data []byte) ([]Warning, error) {
 }
 
 func walkNode(node *yaml.Node, t reflect.Type, warnings *[]Warning) {
-	for t.Kind() == reflect.Ptr {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
@@ -84,7 +84,7 @@ func allowedKeys(t reflect.Type) map[string]reflect.Type {
 		}
 		if hasOpt(opts, "inline") {
 			ft := f.Type
-			for ft.Kind() == reflect.Ptr {
+			for ft.Kind() == reflect.Pointer {
 				ft = ft.Elem()
 			}
 			if ft.Kind() == reflect.Struct {
