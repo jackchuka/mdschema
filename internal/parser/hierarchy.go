@@ -3,7 +3,7 @@ package parser
 import "strings"
 
 // buildHierarchicalSections creates a hierarchical tree of sections
-func (p *Parser) buildHierarchicalSections(headings []*Heading, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, content []byte) *Section {
+func (p *Parser) buildHierarchicalSections(headings []*Heading, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, paragraphs []*Paragraph, content []byte) *Section {
 	// Create root section for top-level content
 	contentLineCount := len(strings.Split(string(content), "\n"))
 	root := &Section{
@@ -56,20 +56,20 @@ func (p *Parser) buildHierarchicalSections(headings []*Heading, codeBlocks []*Co
 	}
 
 	// Second pass: set end lines and associate content
-	p.setEndLinesAndContent(root, codeBlocks, tables, links, images, lists, content)
+	p.setEndLinesAndContent(root, codeBlocks, tables, links, images, lists, paragraphs, content)
 
 	return root
 }
 
 // setEndLinesAndContent sets end lines first, then associates content with sections
-func (p *Parser) setEndLinesAndContent(section *Section, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, content []byte) {
+func (p *Parser) setEndLinesAndContent(section *Section, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, paragraphs []*Paragraph, content []byte) {
 	contentLines := strings.Split(string(content), "\n")
 
 	// First pass: set all end lines correctly (bottom-up via recursion)
 	p.setEndLines(section, len(contentLines))
 
 	// Second pass: associate elements and extract content
-	p.associateContent(section, codeBlocks, tables, links, images, lists, contentLines)
+	p.associateContent(section, codeBlocks, tables, links, images, lists, paragraphs, contentLines)
 }
 
 // setEndLines recursively sets end lines for all sections (top-down)
@@ -109,7 +109,7 @@ func (p *Parser) findNextSiblingStart(section *Section) int {
 }
 
 // associateContent recursively extracts content and associates elements with sections
-func (p *Parser) associateContent(section *Section, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, contentLines []string) {
+func (p *Parser) associateContent(section *Section, codeBlocks []*CodeBlock, tables []*Table, links []*Link, images []*Image, lists []*List, paragraphs []*Paragraph, contentLines []string) {
 	// Extract content
 	if section.StartLine > 0 && section.EndLine <= len(contentLines) {
 		sectionContent := make([]string, 0)
@@ -131,10 +131,11 @@ func (p *Parser) associateContent(section *Section, codeBlocks []*CodeBlock, tab
 	section.Links = filterElements(section, links)
 	section.Images = filterElements(section, images)
 	section.Lists = filterElements(section, lists)
+	section.Paragraphs = filterElements(section, paragraphs)
 
 	// Recursively process children
 	for _, child := range section.Children {
-		p.associateContent(child, codeBlocks, tables, links, images, lists, contentLines)
+		p.associateContent(child, codeBlocks, tables, links, images, lists, paragraphs, contentLines)
 	}
 }
 

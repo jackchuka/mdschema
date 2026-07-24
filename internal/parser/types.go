@@ -41,6 +41,7 @@ type Section struct {
 	Links      []*Link
 	Images     []*Image
 	Lists      []*List
+	Paragraphs []*Paragraph
 }
 
 // collectSections recursively collects all sections in document order
@@ -74,6 +75,12 @@ type List struct {
 	IsOrdered bool
 	Line      int
 	Column    int
+}
+
+// Paragraph represents a top-level prose paragraph (direct child of the document)
+type Paragraph struct {
+	Line   int
+	Column int
 }
 
 // Table represents a table in the document
@@ -118,3 +125,6 @@ func (t *Table) GetLine() int { return t.Line }
 
 // GetLine returns the line number of the image
 func (i *Image) GetLine() int { return i.Line }
+
+// GetLine returns the line number of the paragraph
+func (p *Paragraph) GetLine() int { return p.Line }

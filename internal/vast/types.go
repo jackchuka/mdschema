@@ -78,6 +78,14 @@ func (n *Node) Lists() []*parser.List {
 	return nil
 }
 
+// Paragraphs returns the top-level paragraphs if bound, empty slice otherwise.
+func (n *Node) Paragraphs() []*parser.Paragraph {
+	if n.Section != nil {
+		return n.Section.Paragraphs
+	}
+	return nil
+}
+
 // Location returns line/column for error reporting.
 func (n *Node) Location() (line, column int) {
 	if n.Section != nil && n.Section.Heading != nil {
