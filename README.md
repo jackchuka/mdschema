@@ -1,8 +1,8 @@
 # mdschema
 
-[![Test](https://github.com/jackchuka/mdschema/workflows/Test/badge.svg)](https://github.com/jackchuka/mdschema/actions)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jackchuka/mdschema)](https://goreportcard.com/report/github.com/jackchuka/mdschema)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Test](https://github.com/jackchuka/mdschema/actions/workflows/test.yml/badge.svg)](https://github.com/jackchuka/mdschema/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/jackchuka/mdschema?sort=semver)](https://github.com/jackchuka/mdschema/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A declarative schema-based Markdown documentation validator that helps maintain consistent documentation structure across projects.
 
