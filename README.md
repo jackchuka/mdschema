@@ -370,10 +370,24 @@ frontmatter:
     - { name: "draft", optional: true, type: boolean }
     - { name: "version", optional: true, type: number }
     - { name: "repo", optional: true, format: url }
+    - { name: "status", enum: [draft, published, archived] } # restrict to listed values
 ```
 
 **Field types:** `string`, `number`, `boolean`, `array`, `date`, `object`
 **Field formats:** `date` (YYYY-MM-DD), `email`, `url`
+
+##### Enum Values
+
+Use `enum` to restrict a field to a fixed set of values. For `array` fields,
+every element must be one of the listed values:
+
+```yaml
+frontmatter:
+  fields:
+    - { name: "status", enum: [draft, published, archived] }
+    - { name: "priority", type: number, enum: [1, 2, 3] }
+    - { name: "tags", type: array, enum: [go, cli, markdown] }
+```
 
 ##### Nested Frontmatter Keys
 

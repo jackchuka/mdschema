@@ -86,6 +86,14 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 					NewViolation(r.Name(), err, 1, 1))
 			}
 		}
+
+		// Validate allowed values if specified
+		if len(field.Enum) > 0 {
+			if err := r.validateFieldEnum(field.Name, value, field.Enum); err != "" {
+				violations = append(violations,
+					NewViolation(r.Name(), err, 1, 1))
+			}
+		}
 	}
 
 	return violations
@@ -227,6 +235,72 @@ func (r *FrontmatterRule) validateFieldFormat(name string, value any, format sch
 	return ""
 }
 
+// validateFieldEnum checks if a field value is one of the allowed values.
+// For array values, every element is checked against the allowed values.
+func (r *FrontmatterRule) validateFieldEnum(name string, value any, allowed []any) string {
+	if arr, ok := value.([]any); ok {
+		for _, elem := range arr {
+			if !enumContains(allowed, elem) {
+				return fmt.Sprintf("Frontmatter field '%s' contains %s, allowed values: %s",
+					name, formatEnumValue(elem), formatEnumList(allowed))
+			}
+		}
+		return ""
+	}
+	if !enumContains(allowed, value) {
+		return fmt.Sprintf("Frontmatter field '%s' has value %s, allowed values: %s",
+			name, formatEnumValue(value), formatEnumList(allowed))
+	}
+	return ""
+}
+
+func enumContains(allowed []any, value any) bool {
+	for _, a := range allowed {
+		if enumEqual(a, value) {
+			return true
+		}
+	}
+	return false
+}
+
+// enumEqual compares an allowed value against a frontmatter value, treating
+// numeric types (int, int64, float64) as interchangeable since YAML parsing
+// may produce any of them.
+func enumEqual(a, b any) bool {
+	if af, aok := toFloat(a); aok {
+		bf, bok := toFloat(b)
+		return bok && af == bf
+	}
+	return a == b
+}
+
+func toFloat(v any) (float64, bool) {
+	switch n := v.(type) {
+	case int:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	case float64:
+		return n, true
+	}
+	return 0, false
+}
+
+func formatEnumValue(v any) string {
+	if s, ok := v.(string); ok {
+		return fmt.Sprintf("%q", s)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+func formatEnumList(allowed []any) string {
+	parts := make([]string, len(allowed))
+	for i, a := range allowed {
+		parts[i] = formatEnumValue(a)
+	}
+	return "[" + strings.Join(parts, ", ") + "]"
+}
+
 // isValidDateFormat checks if a string is in YYYY-MM-DD format
 func isValidDateFormat(s string) bool {
 	dateRegex := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
@@ -334,6 +408,14 @@ func hasRequiredDescendant(n *fmTreeNode) bool {
 
 // getPlaceholder returns an appropriate placeholder value based on field type/format
 func (r *FrontmatterRule) getPlaceholder(field schema.FrontmatterField) string {
+	// An enum pins the value down to a known set, so use its first entry
+	if len(field.Enum) > 0 {
+		if field.Type == schema.FieldTypeArray {
+			return "[" + formatEnumValue(field.Enum[0]) + "]"
+		}
+		return formatEnumValue(field.Enum[0])
+	}
+
 	// Check format first as it's more specific
 	switch field.Format {
 	case schema.FieldFormatDate:

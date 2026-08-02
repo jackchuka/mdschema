@@ -90,6 +90,11 @@
         "format": {
           "$ref": "#/$defs/FieldFormat",
           "description": "Date, email, or url"
+        },
+        "enum": {
+          "items": true,
+          "type": "array",
+          "description": "Allowed values (for arrays, applies to each element)"
         }
       },
       "additionalProperties": false,
