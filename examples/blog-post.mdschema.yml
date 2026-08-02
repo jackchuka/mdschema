@@ -26,8 +26,6 @@ structure:
       pattern: "# .*"
     children:
       - heading: "## Introduction"
-        forbidden_text:
-          - "TODO"
       - heading: "## Content"
         allow_additional: true
       - heading: "## Conclusion"
