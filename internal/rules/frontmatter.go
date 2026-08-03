@@ -2,12 +2,17 @@ package rules
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/jackchuka/mdschema/internal/schema"
 	"github.com/jackchuka/mdschema/internal/vast"
 )
+
+// dateLayout is the only date form mdschema validates (see FieldFormatDate).
+const dateLayout = "2006-01-02"
 
 // FrontmatterRule validates YAML frontmatter at the start of documents
 type FrontmatterRule struct {
@@ -72,10 +77,12 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 		}
 
 		// Validate field type if specified
+		wellFormed := true
 		if field.Type != "" {
 			if err := r.validateFieldType(field.Name, value, field.Type); err != "" {
 				violations = append(violations,
 					NewViolation(r.Name(), err, 1, 1))
+				wellFormed = false
 			}
 		}
 
@@ -84,12 +91,16 @@ func (r *FrontmatterRule) ValidateWithContext(ctx *vast.Context) []Violation {
 			if err := r.validateFieldFormat(field.Name, value, field.Format); err != "" {
 				violations = append(violations,
 					NewViolation(r.Name(), err, 1, 1))
+				wellFormed = false
 			}
 		}
 
-		// Validate allowed values if specified
-		if len(field.Enum) > 0 {
-			if err := r.validateFieldEnum(field.Name, value, field.Enum); err != "" {
+		// Validate allowed values if specified. A value that already failed its
+		// type or format check cannot match any enum entry either, and reporting
+		// both leaves the reader with two violations for one mistake — the
+		// earlier, more specific message stands on its own.
+		if len(field.Enum) > 0 && wellFormed {
+			for _, err := range r.validateFieldEnum(field, value) {
 				violations = append(violations,
 					NewViolation(r.Name(), err, 1, 1))
 			}
@@ -235,23 +246,30 @@ func (r *FrontmatterRule) validateFieldFormat(name string, value any, format sch
 	return ""
 }
 
-// validateFieldEnum checks if a field value is one of the allowed values.
-// For array values, every element is checked against the allowed values.
-func (r *FrontmatterRule) validateFieldEnum(name string, value any, allowed []any) string {
-	if arr, ok := value.([]any); ok {
+// validateFieldEnum checks if a field value is one of the allowed values. For
+// array fields every element is checked, so a document listing several
+// disallowed values reports all of them in a single run.
+func (r *FrontmatterRule) validateFieldEnum(field schema.FrontmatterField, value any) []string {
+	if field.Type == schema.FieldTypeArray {
+		arr, ok := value.([]any)
+		if !ok {
+			// validateFieldType already reports the wrong shape.
+			return nil
+		}
+		var errs []string
 		for _, elem := range arr {
-			if !enumContains(allowed, elem) {
-				return fmt.Sprintf("Frontmatter field '%s' contains %s, allowed values: %s",
-					name, formatEnumValue(elem), formatEnumList(allowed))
+			if !enumContains(field.Enum, elem) {
+				errs = append(errs, fmt.Sprintf("Frontmatter field '%s' contains %s, allowed values: %s",
+					field.Name, formatEnumValue(elem), formatEnumList(field.Enum)))
 			}
 		}
-		return ""
+		return errs
 	}
-	if !enumContains(allowed, value) {
-		return fmt.Sprintf("Frontmatter field '%s' has value %s, allowed values: %s",
-			name, formatEnumValue(value), formatEnumList(allowed))
+	if !enumContains(field.Enum, value) {
+		return []string{fmt.Sprintf("Frontmatter field '%s' has value %s, allowed values: %s",
+			field.Name, formatEnumValue(value), formatEnumList(field.Enum))}
 	}
-	return ""
+	return nil
 }
 
 func enumContains(allowed []any, value any) bool {
@@ -263,15 +281,69 @@ func enumContains(allowed []any, value any) bool {
 	return false
 }
 
-// enumEqual compares an allowed value against a frontmatter value, treating
-// numeric types (int, int64, float64) as interchangeable since YAML parsing
-// may produce any of them.
+// enumEqual compares an allowed value against a frontmatter value. Numeric
+// types (int, int64, float64) are interchangeable since YAML parsing may
+// produce any of them. Dates are compared as YYYY-MM-DD because the two sides
+// come from different decoders: schemas via yaml.v3, which resolves timestamps
+// to time.Time, and document frontmatter via goldmark-meta's yaml.v2, which
+// leaves them as strings. Maps and slices recurse so that nested dates and
+// numbers get the same treatment as top-level ones.
 func enumEqual(a, b any) bool {
 	if af, aok := toFloat(a); aok {
 		bf, bok := toFloat(b)
 		return bok && af == bf
 	}
-	return a == b
+	if ad, aok := toDateString(a); aok {
+		bd, bok := toDateString(b)
+		return bok && ad == bd
+	}
+	if am, aok := toStringMap(a); aok {
+		bm, bok := toStringMap(b)
+		if !bok || len(am) != len(bm) {
+			return false
+		}
+		for k, av := range am {
+			bv, ok := bm[k]
+			if !ok || !enumEqual(av, bv) {
+				return false
+			}
+		}
+		return true
+	}
+	if as, aok := a.([]any); aok {
+		bs, bok := b.([]any)
+		if !bok || len(as) != len(bs) {
+			return false
+		}
+		for i := range as {
+			if !enumEqual(as[i], bs[i]) {
+				return false
+			}
+		}
+		return true
+	}
+	// reflect.DeepEqual rather than ==: == panics on non-comparable dynamic
+	// types, and only scalars are guaranteed to have reached this point.
+	return reflect.DeepEqual(a, b)
+}
+
+// toStringMap normalizes either map shape a YAML decoder may produce. Nested
+// maps arrive as map[string]any from schemas (yaml.v3) but as map[any]any from
+// document frontmatter (goldmark-meta's yaml.v2), so comparing the two sides
+// directly rejects structurally identical maps on their type alone. Non-string
+// keys are rendered with %v, which is enough to compare them.
+func toStringMap(v any) (map[string]any, bool) {
+	switch m := v.(type) {
+	case map[string]any:
+		return m, true
+	case map[any]any:
+		out := make(map[string]any, len(m))
+		for k, elem := range m {
+			out[fmt.Sprintf("%v", k)] = elem
+		}
+		return out, true
+	}
+	return nil, false
 }
 
 func toFloat(v any) (float64, bool) {
@@ -286,9 +358,33 @@ func toFloat(v any) (float64, bool) {
 	return 0, false
 }
 
+// toDateString normalizes a date to YYYY-MM-DD. Timestamps carrying a clock
+// component are left alone, since mdschema's date support covers whole days
+// only and truncating them would make distinct instants compare equal.
+func toDateString(v any) (string, bool) {
+	switch d := v.(type) {
+	case time.Time:
+		if d.Hour() == 0 && d.Minute() == 0 && d.Second() == 0 && d.Nanosecond() == 0 {
+			return d.Format(dateLayout), true
+		}
+	case string:
+		if isValidDateFormat(d) {
+			return d, true
+		}
+	}
+	return "", false
+}
+
 func formatEnumValue(v any) string {
-	if s, ok := v.(string); ok {
-		return fmt.Sprintf("%q", s)
+	switch val := v.(type) {
+	case nil:
+		return "null"
+	case string:
+		return fmt.Sprintf("%q", val)
+	case time.Time:
+		if s, ok := toDateString(val); ok {
+			return s
+		}
 	}
 	return fmt.Sprintf("%v", v)
 }

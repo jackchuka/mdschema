@@ -7,6 +7,7 @@ import (
 	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
 	"github.com/jackchuka/mdschema/internal/vast"
+	"gopkg.in/yaml.v3"
 )
 
 func TestNewFrontmatterRule(t *testing.T) {
@@ -396,6 +397,160 @@ func TestFrontmatterRuleEnum(t *testing.T) {
 			}
 			if tt.wantMessage != "" && violations[0].Message != tt.wantMessage {
 				t.Errorf("Message = %q, want %q", violations[0].Message, tt.wantMessage)
+			}
+		})
+	}
+}
+
+// TestFrontmatterRuleEnumEdgeCases builds fields by unmarshalling YAML the way
+// the schema loader does, so enum entries carry the same dynamic types a real
+// schema file produces (notably time.Time for dates and []any for nested lists).
+func TestFrontmatterRuleEnumEdgeCases(t *testing.T) {
+	tests := []struct {
+		name           string
+		fieldYAML      string
+		content        string
+		wantViolations int
+		wantMessages   []string
+	}{
+		{
+			name:      "nested list element matching enum entry",
+			fieldYAML: "name: tags\ntype: array\nenum:\n  - [a, b]\n",
+			content:   "---\ntags:\n  - [a, b]\n---\n\n# Title\n",
+		},
+		{
+			name:           "nested list element not in enum",
+			fieldYAML:      "name: tags\ntype: array\nenum:\n  - [a, b]\n",
+			content:        "---\ntags:\n  - [c, d]\n---\n\n# Title\n",
+			wantViolations: 1,
+		},
+		{
+			name:      "date value in enum",
+			fieldYAML: "name: released\nformat: date\nenum: [2024-01-01, 2024-02-01]\n",
+			content:   "---\nreleased: 2024-01-01\n---\n\n# Title\n",
+		},
+		{
+			// The two decoders disagree on map key types (map[string]any from
+			// yaml.v3 vs map[any]any from goldmark-meta), so a map enum entry
+			// only matches if the comparison normalizes both sides.
+			name:      "object value matching a map enum entry",
+			fieldYAML: "name: meta\ntype: object\nenum:\n  - {a: b}\n",
+			content:   "---\nmeta:\n  a: b\n---\n\n# Title\n",
+		},
+		{
+			name:           "object value not matching a map enum entry",
+			fieldYAML:      "name: meta\ntype: object\nenum:\n  - {a: b}\n",
+			content:        "---\nmeta:\n  a: c\n---\n\n# Title\n",
+			wantViolations: 1,
+		},
+		{
+			name:      "map element inside an array enum",
+			fieldYAML: "name: items\ntype: array\nenum:\n  - {a: b}\n",
+			content:   "---\nitems:\n  - {a: b}\n---\n\n# Title\n",
+		},
+		{
+			// Nested values need the same date normalization as top-level ones.
+			name:      "date nested inside a map enum entry",
+			fieldYAML: "name: window\ntype: object\nenum:\n  - {from: 2024-01-01}\n",
+			content:   "---\nwindow:\n  from: 2024-01-01\n---\n\n# Title\n",
+		},
+		{
+			// A value that fails its type check cannot match any enum entry, so
+			// only the more specific type message should be reported.
+			name:           "type mismatch reports once, not alongside an enum violation",
+			fieldYAML:      "name: priority\ntype: number\nenum: [1, 2, 3]\n",
+			content:        "---\npriority: high\n---\n\n# Title\n",
+			wantViolations: 1,
+			wantMessages: []string{
+				"Frontmatter field 'priority' should be a number",
+			},
+		},
+		{
+			name:           "format mismatch reports once, not alongside an enum violation",
+			fieldYAML:      "name: released\nformat: date\nenum: [2024-01-01]\n",
+			content:        "---\nreleased: not-a-date\n---\n\n# Title\n",
+			wantViolations: 1,
+			wantMessages: []string{
+				"Frontmatter field 'released' should be in YYYY-MM-DD format",
+			},
+		},
+		{
+			name:           "date value not in enum",
+			fieldYAML:      "name: released\nformat: date\nenum: [2024-01-01, 2024-02-01]\n",
+			content:        "---\nreleased: 2024-03-01\n---\n\n# Title\n",
+			wantViolations: 1,
+			wantMessages: []string{
+				`Frontmatter field 'released' has value "2024-03-01", allowed values: [2024-01-01, 2024-02-01]`,
+			},
+		},
+		{
+			name:           "scalar field rejects list value",
+			fieldYAML:      "name: status\nenum: [draft, published]\n",
+			content:        "---\nstatus:\n  - draft\n  - published\n---\n\n# Title\n",
+			wantViolations: 1,
+			wantMessages: []string{
+				`Frontmatter field 'status' has value [draft published], allowed values: ["draft", "published"]`,
+			},
+		},
+		{
+			name:           "array field with scalar value defers to type check",
+			fieldYAML:      "name: tags\ntype: array\nenum: [go, cli]\n",
+			content:        "---\ntags: go\n---\n\n# Title\n",
+			wantViolations: 1,
+			wantMessages: []string{
+				"Frontmatter field 'tags' should be an array",
+			},
+		},
+		{
+			name:           "null value",
+			fieldYAML:      "name: status\nenum: [draft, published]\n",
+			content:        "---\nstatus:\n---\n\n# Title\n",
+			wantViolations: 1,
+			wantMessages: []string{
+				`Frontmatter field 'status' has value null, allowed values: ["draft", "published"]`,
+			},
+		},
+		{
+			name:           "every offending array element is reported",
+			fieldYAML:      "name: tags\ntype: array\nenum: [go, cli]\n",
+			content:        "---\ntags:\n  - rust\n  - zig\n---\n\n# Title\n",
+			wantViolations: 2,
+			wantMessages: []string{
+				`Frontmatter field 'tags' contains "rust", allowed values: ["go", "cli"]`,
+				`Frontmatter field 'tags' contains "zig", allowed values: ["go", "cli"]`,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var field schema.FrontmatterField
+			if err := yaml.Unmarshal([]byte(tt.fieldYAML), &field); err != nil {
+				t.Fatalf("Unmarshal() error: %v", err)
+			}
+
+			p := parser.New()
+			doc, err := p.Parse("test.md", []byte(tt.content))
+			if err != nil {
+				t.Fatalf("Parse() error: %v", err)
+			}
+
+			s := &schema.Schema{
+				Frontmatter: &schema.FrontmatterConfig{
+					Fields: []schema.FrontmatterField{field},
+				},
+			}
+
+			ctx := vast.NewContext(doc, s, "")
+			violations := NewFrontmatterRule().ValidateWithContext(ctx)
+
+			if len(violations) != tt.wantViolations {
+				t.Fatalf("Got %d violations, want %d: %v", len(violations), tt.wantViolations, violations)
+			}
+			for i, want := range tt.wantMessages {
+				if violations[i].Message != want {
+					t.Errorf("Message[%d] = %q, want %q", i, violations[i].Message, want)
+				}
 			}
 		})
 	}
