@@ -378,16 +378,22 @@ frontmatter:
 
 ##### Enum Values
 
-Use `enum` to restrict a field to a fixed set of values. For `array` fields,
-every element must be one of the listed values:
+Use `enum` to restrict a field to a fixed set of values. Declare `type: array`
+to check each element of a list instead of the list as a whole:
 
 ```yaml
 frontmatter:
   fields:
     - { name: "status", enum: [draft, published, archived] }
     - { name: "priority", type: number, enum: [1, 2, 3] }
-    - { name: "tags", type: array, enum: [go, cli, markdown] }
+    - { name: "released", type: date, enum: [2024-01-01, 2024-07-01] }
+    - { name: "tags", type: array, enum: [go, cli, markdown] } # every element must be listed
 ```
+
+Enum entries are compared against the declared `type` (or the type implied by
+`format`), so a mismatch such as `{ type: number, enum: [low, high] }` or
+`{ format: email, enum: [1, 2] }` — which no value could ever satisfy — is
+reported as a schema warning when the schema is loaded.
 
 ##### Nested Frontmatter Keys
 
