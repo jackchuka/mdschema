@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../schema.json
+#
+# Example schema for blog posts with frontmatter validation
+# Demonstrates required/optional fields, types, formats, nested keys,
+# and enum-restricted values.
+
+frontmatter:
+  # optional: false is default, meaning frontmatter is required
+  fields:
+    - { name: "title", type: string } # required by default
+    - { name: "date", type: date, format: date }
+    - { name: "status", enum: [draft, published, archived] } # value must be one of these
+    - { name: "priority", optional: true, type: number, enum: [1, 2, 3] }
+    - { name: "tags", optional: true, type: array, enum: [go, cli, markdown, tutorial] } # each element checked
+    - { name: "author", type: object }
+    - { name: "author.name" } # nested key via dot-notation
+    - { name: "author.email", optional: true, format: email }
+    - { name: "author.homepage", optional: true, format: url }
+
+heading_rules:
+  no_skip_levels: true
+  max_depth: 3
+
+structure:
+  - heading:
+      pattern: "# .*"
+    children:
+      - heading: "## Introduction"
+      - heading: "## Content"
+        allow_additional: true
+      - heading: "## Conclusion"
+        optional: true

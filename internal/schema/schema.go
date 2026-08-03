@@ -519,4 +519,8 @@ type FrontmatterField struct {
 
 	// Format specifies format validation (use FieldFormat* constants)
 	Format FieldFormat `yaml:"format,omitempty" json:"format,omitempty" lc:"date, email, or url"`
+
+	// Enum restricts the field value to one of the listed values. For array
+	// fields, every element must be one of the listed values.
+	Enum []any `yaml:"enum,omitempty" json:"enum,omitempty" lc:"allowed values (for arrays, applies to each element)"`
 }

@@ -312,6 +312,120 @@ func TestFrontmatterRuleOptionalField(t *testing.T) {
 	}
 }
 
+func TestFrontmatterRuleEnum(t *testing.T) {
+	tests := []struct {
+		name           string
+		content        string
+		field          schema.FrontmatterField
+		wantViolations int
+		wantMessage    string
+	}{
+		{
+			name:    "string value in enum",
+			content: "---\nstatus: draft\n---\n\n# Title\n",
+			field:   schema.FrontmatterField{Name: "status", Enum: []any{"draft", "published", "archived"}},
+		},
+		{
+			name:           "string value not in enum",
+			content:        "---\nstatus: pending\n---\n\n# Title\n",
+			field:          schema.FrontmatterField{Name: "status", Enum: []any{"draft", "published", "archived"}},
+			wantViolations: 1,
+			wantMessage:    `Frontmatter field 'status' has value "pending", allowed values: ["draft", "published", "archived"]`,
+		},
+		{
+			name:    "number value in enum",
+			content: "---\npriority: 2\n---\n\n# Title\n",
+			field:   schema.FrontmatterField{Name: "priority", Enum: []any{1, 2, 3}},
+		},
+		{
+			name:           "number value not in enum",
+			content:        "---\npriority: 5\n---\n\n# Title\n",
+			field:          schema.FrontmatterField{Name: "priority", Enum: []any{1, 2, 3}},
+			wantViolations: 1,
+		},
+		{
+			name:    "array with all elements in enum",
+			content: "---\ntags:\n  - go\n  - cli\n---\n\n# Title\n",
+			field:   schema.FrontmatterField{Name: "tags", Type: schema.FieldTypeArray, Enum: []any{"go", "cli", "markdown"}},
+		},
+		{
+			name:           "array with element not in enum",
+			content:        "---\ntags:\n  - go\n  - rust\n---\n\n# Title\n",
+			field:          schema.FrontmatterField{Name: "tags", Type: schema.FieldTypeArray, Enum: []any{"go", "cli", "markdown"}},
+			wantViolations: 1,
+			wantMessage:    `Frontmatter field 'tags' contains "rust", allowed values: ["go", "cli", "markdown"]`,
+		},
+		{
+			name:    "missing optional field skips enum",
+			content: "---\ntitle: Test\n---\n\n# Title\n",
+			field:   schema.FrontmatterField{Name: "status", Optional: true, Enum: []any{"draft", "published"}},
+		},
+		{
+			name:    "nested field in enum",
+			content: "---\nmetadata:\n  visibility: public\n---\n\n# Title\n",
+			field:   schema.FrontmatterField{Name: "metadata.visibility", Enum: []any{"public", "private"}},
+		},
+		{
+			name:           "nested field not in enum",
+			content:        "---\nmetadata:\n  visibility: internal\n---\n\n# Title\n",
+			field:          schema.FrontmatterField{Name: "metadata.visibility", Enum: []any{"public", "private"}},
+			wantViolations: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := parser.New()
+			doc, err := p.Parse("test.md", []byte(tt.content))
+			if err != nil {
+				t.Fatalf("Parse() error: %v", err)
+			}
+
+			s := &schema.Schema{
+				Frontmatter: &schema.FrontmatterConfig{
+					Fields: []schema.FrontmatterField{tt.field},
+				},
+			}
+
+			ctx := vast.NewContext(doc, s, "")
+			rule := NewFrontmatterRule()
+			violations := rule.ValidateWithContext(ctx)
+
+			if len(violations) != tt.wantViolations {
+				t.Fatalf("Got %d violations, want %d: %v", len(violations), tt.wantViolations, violations)
+			}
+			if tt.wantMessage != "" && violations[0].Message != tt.wantMessage {
+				t.Errorf("Message = %q, want %q", violations[0].Message, tt.wantMessage)
+			}
+		})
+	}
+}
+
+func TestFrontmatterRuleGenerateEnumPlaceholder(t *testing.T) {
+	rule := NewFrontmatterRule()
+	var builder strings.Builder
+
+	s := &schema.Schema{
+		Frontmatter: &schema.FrontmatterConfig{
+			Fields: []schema.FrontmatterField{
+				{Name: "status", Enum: []any{"draft", "published"}},
+				{Name: "tags", Type: schema.FieldTypeArray, Enum: []any{"go", "cli"}},
+			},
+		},
+	}
+	if !rule.Generate(&builder, s) {
+		t.Fatal("Generate() should return true when frontmatter config exists")
+	}
+
+	output := builder.String()
+	if !strings.Contains(output, `status: "draft"`) {
+		t.Errorf("Output should use first enum value as placeholder, got:\n%s", output)
+	}
+	if !strings.Contains(output, `tags: ["go"]`) {
+		t.Errorf("Output should use first enum value wrapped in array, got:\n%s", output)
+	}
+}
+
 func TestFrontmatterRuleGenerateDocumentPreamble(t *testing.T) {
 	rule := NewFrontmatterRule()
 	var builder strings.Builder
