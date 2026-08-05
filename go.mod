@@ -8,7 +8,7 @@ require (
 	github.com/invopop/jsonschema v0.14.0
 	github.com/pb33f/ordered-map/v2 v2.3.1
 	github.com/spf13/cobra v1.10.2
-	github.com/yuin/goldmark v1.8.4
+	github.com/yuin/goldmark v1.8.5
 	github.com/yuin/goldmark-meta v1.1.0
 	github.com/zijiren233/yaml-comment v0.2.2
 	gopkg.in/yaml.v3 v3.0.1
