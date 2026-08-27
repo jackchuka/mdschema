@@ -355,6 +355,7 @@ func TestGenerateExprHeading(t *testing.T) {
 		{"a real path is reduced to its bare filename first", "filename == heading", "docs/command/moveInventoryLots.md", "# moveInventoryLots"},
 		{"same-transform expression also resolved", "slug(filename) == slug(heading)", "CreateOrder", "# CreateOrder"},
 		{"candidate that doesn't satisfy the expression falls back", `heading == "FixedTitle"`, "SomeOtherName", `# heading == "FixedTitle"`},
+		{"path with no name before the extension falls back", "filename == heading", "docs/.md", "# filename == heading"},
 	}
 
 	for _, tt := range tests {
@@ -370,6 +371,23 @@ func TestGenerateExprHeading(t *testing.T) {
 				t.Errorf("Generate() = %q, want it to contain %q", output, tt.want)
 			}
 		})
+	}
+}
+
+func TestGenerateExprWinsOverPatternAndLiteral(t *testing.T) {
+	g := New()
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Pattern: "^# .+$", Expr: "filename == heading"}},
+			{Heading: schema.HeadingPattern{Literal: "# Title", Expr: "filename == heading"}},
+		},
+	}
+
+	output := g.Generate(s, "docs/CreateOrder.md")
+
+	if strings.Count(output, "# CreateOrder") != 2 {
+		t.Errorf("Generate() should let expr win over pattern/literal, got: %q", output)
 	}
 }
 

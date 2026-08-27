@@ -64,10 +64,13 @@ func (g *Generator) generateElement(builder *strings.Builder, element schema.Str
 // resolveHeadingText tries the filename as the heading for an expr-based pattern, keeping it
 // only if EvaluateHeadingExpr confirms the expression holds for heading == filename.
 func (g *Generator) resolveHeadingText(hp schema.HeadingPattern, outputPath string, level int) string {
-	if hp.Pattern == "" && hp.Literal == "" && hp.Expr != "" && outputPath != "" {
+	// Mirror PatternMatcher.MatchesHeading: expr wins over pattern/literal when both are set.
+	if hp.Expr != "" && outputPath != "" {
 		filename := vast.ExtractFilename(outputPath)
-		if matched, err := vast.EvaluateHeadingExpr(hp.Expr, filename, filename, level); err == nil && matched {
-			return filename
+		if filename != "" {
+			if matched, err := vast.EvaluateHeadingExpr(hp.Expr, filename, filename, level); err == nil && matched {
+				return filename
+			}
 		}
 	}
 	return g.extractHeadingText(hp.GetReadableName())
