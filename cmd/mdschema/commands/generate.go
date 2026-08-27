@@ -56,7 +56,7 @@ func runGenerate(cfg *Config, schemaFile, outputFile string) error {
 
 	// Generate markdown content using the generator package
 	gen := generator.New()
-	content := gen.Generate(s)
+	content := gen.Generate(s, outputFile)
 
 	// Output to file or stdout
 	if outputFile != "" {
