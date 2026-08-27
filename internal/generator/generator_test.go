@@ -26,7 +26,7 @@ func TestGenerateBasicStructure(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "# Title") {
 		t.Error("Generated output should contain the heading")
@@ -42,7 +42,7 @@ func TestGenerateOptionalSection(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "Optional section") {
 		t.Error("Generated output should mark optional sections")
@@ -64,7 +64,7 @@ func TestGenerateNestedChildren(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "# Title") {
 		t.Error("Generated output should contain parent heading")
@@ -95,7 +95,7 @@ func TestGenerateWithCodeBlocks(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "```bash") {
 		t.Error("Generated output should contain bash code block")
@@ -116,7 +116,7 @@ func TestGenerateWithRequiredText(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "important text") {
 		t.Error("Generated output should mention required text")
@@ -157,7 +157,7 @@ func TestGenerateMultipleTopLevel(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if strings.Count(output, "# First") != 1 {
 		t.Error("Should generate First heading exactly once")
@@ -191,7 +191,7 @@ func TestGenerateDeeplyNested(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "# Level 1") {
 		t.Error("Should contain level 1 heading")
@@ -223,7 +223,7 @@ func TestGenerateFrontmatter(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	// Check frontmatter delimiters
 	if !strings.Contains(output, "---\n") {
@@ -269,7 +269,7 @@ func TestGenerateFrontmatterFormats(t *testing.T) {
 		Structure: []schema.StructureElement{},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "author_email: user@example.com") {
 		t.Error("Generated output should contain email format placeholder")
@@ -293,7 +293,7 @@ func TestGenerateNoFrontmatter(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	// Should not contain frontmatter delimiters when no frontmatter config
 	lines := strings.Split(output, "\n")
@@ -320,7 +320,7 @@ func TestGenerateLiteral(t *testing.T) {
 		},
 	}
 
-	output := g.Generate(s)
+	output := g.Generate(s, "")
 
 	if !strings.Contains(output, "# Title") {
 		t.Error("Generated output should contain parent heading")
@@ -340,5 +340,54 @@ func TestGenerateLiteral(t *testing.T) {
 
 	if !strings.Contains(output, "<!-- 2. ## Optional Child (optional) -->") {
 		t.Error("Generated output should contain optional child heading comment")
+	}
+}
+
+func TestGenerateExprHeading(t *testing.T) {
+	tests := []struct {
+		name     string
+		expr     string
+		filename string
+		want     string
+	}{
+		{"no filename known, falls back to expression text", "filename == heading", "", "# filename == heading"},
+		{"equality resolved to the filename", "filename == heading", "moveInventoryLots", "# moveInventoryLots"},
+		{"same-transform expression also resolved", "slug(filename) == slug(heading)", "CreateOrder", "# CreateOrder"},
+		{"candidate that doesn't satisfy the expression falls back", `heading == "FixedTitle"`, "SomeOtherName", `# heading == "FixedTitle"`},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := New()
+			s := &schema.Schema{
+				Structure: []schema.StructureElement{{Heading: schema.HeadingPattern{Expr: tt.expr}}},
+			}
+
+			output := g.Generate(s, tt.filename)
+
+			if !strings.Contains(output, tt.want) {
+				t.Errorf("Generate() = %q, want it to contain %q", output, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateFilenameDoesNotAffectLiteralOrPatternHeadings(t *testing.T) {
+	g := New()
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{Heading: schema.HeadingPattern{Literal: "# Title"}},
+			{Heading: schema.HeadingPattern{Pattern: "# .+"}},
+		},
+	}
+
+	output := g.Generate(s, "SomeFilename")
+
+	if !strings.Contains(output, "# Title") {
+		t.Errorf("Generate() should leave a literal heading unchanged, got: %q", output)
+	}
+	if strings.Contains(output, "# SomeFilename") {
+		t.Errorf("Generate() should not substitute the filename into literal/pattern headings, got: %q", output)
 	}
 }

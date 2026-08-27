@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackchuka/mdschema/internal/generator"
 	"github.com/jackchuka/mdschema/internal/schema"
+	"github.com/jackchuka/mdschema/internal/vast"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,7 @@ func runGenerate(cfg *Config, schemaFile, outputFile string) error {
 
 	// Generate markdown content using the generator package
 	gen := generator.New()
-	content := gen.Generate(s)
+	content := gen.Generate(s, vast.ExtractFilename(outputFile))
 
 	// Output to file or stdout
 	if outputFile != "" {

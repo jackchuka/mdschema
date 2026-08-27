@@ -52,11 +52,21 @@ func (pm *PatternMatcher) matchesHeadingExpr(heading *parser.Heading, expression
 		return false
 	}
 
-	// Build expression environment
+	matched, err := EvaluateHeadingExpr(expression, filename, heading.Text, heading.Level)
+	if err != nil {
+		return false
+	}
+	return matched
+}
+
+// EvaluateHeadingExpr evaluates a heading-matching expression (schema.HeadingPattern.Expr)
+// against a candidate filename/heading/level. Exported for the generator package to test
+// candidate heading values.
+func EvaluateHeadingExpr(expression, filename, heading string, level int) (bool, error) {
 	env := map[string]any{
 		"filename":    filename,
-		"heading":     heading.Text,
-		"level":       heading.Level,
+		"heading":     heading,
+		"level":       level,
 		"slug":        parser.GenerateSlug,
 		"kebab":       toKebabCase,
 		"lower":       strings.ToLower,
@@ -73,16 +83,16 @@ func (pm *PatternMatcher) matchesHeadingExpr(heading *parser.Heading, expression
 
 	program, err := expr.Compile(expression, expr.Env(env), expr.AsBool())
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	result, err := expr.Run(program, env)
 	if err != nil {
-		return false
+		return false, err
 	}
 
 	matched, ok := result.(bool)
-	return ok && matched
+	return ok && matched, nil
 }
 
 // matchRegexPattern compiles and matches a regex pattern with caching.
