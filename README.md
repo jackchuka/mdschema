@@ -468,6 +468,7 @@ jobs:
 | `schema`            | Path to schema file                            | `.mdschema.yml` |
 | `args`              | Additional CLI arguments                       | (empty)         |
 | `working-directory` | Working directory for validation               | `.`             |
+| `token`             | Token for GitHub API version lookups           | `github.token`  |
 
 ### Monorepo Example
 

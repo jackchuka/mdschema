@@ -8,7 +8,7 @@ branding:
 
 inputs:
   version:
-    description: "mdschema version to install. Defaults to the action ref (e.g., @v0.9.1 uses v0.9.1). Use 'latest' to always get the newest release."
+    description: "mdschema version to install. Defaults to the action ref: a tag ref (@v0.9.1) is used directly, and a SHA-pinned ref is resolved back to its release tag. Use 'latest' to always get the newest release."
     required: false
     default: ""
   files:
@@ -27,6 +27,10 @@ inputs:
     description: "Working directory for validation"
     required: false
     default: "."
+  token:
+    description: "GitHub token used for API lookups when resolving the mdschema version. Only needed to avoid anonymous API rate limits."
+    required: false
+    default: "${{ github.token }}"
 
 runs:
   using: "composite"
@@ -34,26 +38,70 @@ runs:
     - name: Determine version
       id: version
       shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        ACTION_REF: ${{ github.action_ref }}
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: jackchuka/mdschema
       run: |
-        INPUT_VERSION="${{ inputs.version }}"
-        ACTION_REF="${{ github.action_ref }}"
+        set -euo pipefail
 
-        if [ -n "$INPUT_VERSION" ] && [ "$INPUT_VERSION" != "latest" ]; then
-          # Use explicitly specified version
-          VERSION="$INPUT_VERSION"
-        elif [ -n "$ACTION_REF" ] && [ "$INPUT_VERSION" != "latest" ]; then
-          # Use action ref (e.g., v0.9.1 from @v0.9.1)
-          VERSION="$ACTION_REF"
-        else
-          # Fallback to latest (for local dev with ./ or explicit 'latest')
-          VERSION=$(curl -s https://api.github.com/repos/jackchuka/mdschema/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+        die() { echo "::error title=mdschema::$*" >&2; exit 1; }
+
+        api() {
+          local headers=(
+            -H "Accept: application/vnd.github+json"
+            -H "X-GitHub-Api-Version: 2022-11-28"
+          )
+          if [ -n "${GH_TOKEN}" ]; then
+            headers+=(-H "Authorization: Bearer ${GH_TOKEN}")
+          fi
+          curl --fail --silent --show-error --location \
+            --retry 3 --retry-delay 2 --retry-all-errors \
+            "${headers[@]}" "$1"
+        }
+
+        RATE_LIMIT_HINT="If this is an anonymous API rate limit, pass a token via the 'token' input (it defaults to \${{ github.token }}), or set the 'version' input explicitly."
+
+        VERSION=""
+
+        if [ -n "${INPUT_VERSION}" ] && [ "${INPUT_VERSION}" != "latest" ]; then
+          # Explicitly requested version wins.
+          VERSION="${INPUT_VERSION}"
+        elif [ "${INPUT_VERSION}" != "latest" ] && [[ "${ACTION_REF}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+          # Tag ref, e.g. @v0.15.3
+          VERSION="${ACTION_REF}"
+        elif [ "${INPUT_VERSION}" != "latest" ] && [[ "${ACTION_REF}" =~ ^[0-9a-f]{40}$ ]]; then
+          # SHA-pinned (the security best practice). Resolve the commit back to its
+          # release tag so the pin actually determines which binary we run.
+          command -v jq >/dev/null 2>&1 \
+            || die "jq is required to resolve a SHA-pinned action ref to a release tag. Install jq on the runner, or set the 'version' input explicitly."
+          TAGS="$(api "https://api.github.com/repos/${REPO}/tags?per_page=100")" \
+            || die "could not reach the GitHub API to resolve commit ${ACTION_REF} to a tag. ${RATE_LIMIT_HINT}"
+          VERSION="$(printf '%s' "${TAGS}" | jq -r --arg sha "${ACTION_REF}" 'map(select(.commit.sha == $sha)) | .[0].name // ""')"
+          [ -n "${VERSION}" ] \
+            || die "commit ${ACTION_REF} is not a tagged release of ${REPO} (checked the 100 most recent tags). Pin the action to a release tag, or set the 'version' input explicitly."
         fi
 
-        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        if [ -z "${VERSION}" ]; then
+          LATEST="$(api "https://api.github.com/repos/${REPO}/releases/latest")" \
+            || die "could not reach the GitHub API to determine the latest mdschema release. ${RATE_LIMIT_HINT}"
+          VERSION="$(printf '%s' "${LATEST}" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n1)"
+          [ -n "${VERSION}" ] \
+            || die "could not parse a tag_name from the latest release of ${REPO}. ${RATE_LIMIT_HINT}"
+        fi
+
+        echo "Resolved mdschema version: ${VERSION}"
+        echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
     - name: Download mdschema
       shell: bash
+      env:
+        VERSION: ${{ steps.version.outputs.version }}
+        REPO: jackchuka/mdschema
       run: |
+        set -euo pipefail
+
         OS=$(uname -s | tr '[:upper:]' '[:lower:]')
         ARCH=$(uname -m)
         case $ARCH in
@@ -61,12 +109,19 @@ runs:
           aarch64|arm64) ARCH="arm64" ;;
         esac
 
-        VERSION="${{ steps.version.outputs.version }}"
         VERSION_NUM="${VERSION#v}"
-        URL="https://github.com/jackchuka/mdschema/releases/download/${VERSION}/mdschema_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
+        URL="https://github.com/${REPO}/releases/download/${VERSION}/mdschema_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
 
-        curl -sL "$URL" | tar xz -C /usr/local/bin mdschema
-        chmod +x /usr/local/bin/mdschema
+        echo "Downloading ${URL}"
+        TMP="$(mktemp -d)"
+        curl --fail --silent --show-error --location \
+          --retry 3 --retry-delay 2 --retry-all-errors \
+          -o "${TMP}/mdschema.tar.gz" "${URL}" \
+          || { echo "::error title=mdschema::failed to download ${URL} (is ${VERSION} a published release with a ${OS}/${ARCH} archive?)" >&2; exit 1; }
+
+        tar xz -C "${TMP}" -f "${TMP}/mdschema.tar.gz" mdschema
+        install -m 0755 "${TMP}/mdschema" /usr/local/bin/mdschema
+        rm -rf "${TMP}"
 
     - name: Run mdschema check
       shell: bash
