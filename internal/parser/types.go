@@ -73,8 +73,19 @@ type Link struct {
 // List represents a list in the document
 type List struct {
 	IsOrdered bool
+	Nested    bool        // true when the list is a sub-list inside another list item
+	Items     []*ListItem // direct items of this list (sub-list items belong to the sub-list)
 	Line      int
 	Column    int
+}
+
+// ListItem represents a single item of a list
+type ListItem struct {
+	// Text is the raw Markdown source of the item's leading text block
+	// (inline markup such as **bold** or `code` is preserved; sub-lists are excluded).
+	Text   string
+	Line   int
+	Column int
 }
 
 // Paragraph represents a top-level prose paragraph (direct child of the document)

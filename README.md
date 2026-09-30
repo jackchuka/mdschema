@@ -162,7 +162,7 @@ structure:
 - **`code_blocks`** - Code block requirements: `{lang: "bash", min: 1, max: 3}`
 - **`images`** - Image requirements: `{min: 1, require_alt: true, formats: ["png", "svg"]}`
 - **`tables`** - Table requirements: `{min: 1, min_columns: 2, required_headers: ["Name"]}`
-- **`lists`** - List requirements: `{min: 1, type: "ordered", min_items: 3}`
+- **`lists`** - List requirements: `{min: 1, type: "ordered", min_items: 3, items_must_match: [{pattern: "^[A-Z]"}]}` (`items_must_match` entries use the same `"text"` / `{pattern: "..."}` forms as `required_text`; every top-level item must match every entry, tested against the item's raw Markdown so `**Bold**` keeps its asterisks; sub-list items are not checked)
 - **`word_count`** - Word count constraints: `{min: 50, max: 500}`
 
 #### Global Rules (apply to entire document)
@@ -327,7 +327,7 @@ mdschema includes comprehensive validation rules organized into three categories
 | **Code Blocks**    | Code block requirements                            | `lang`, `min`, `max`                                           |
 | **Images**         | Image presence and format                          | `min`, `max`, `require_alt`, `formats`                         |
 | **Tables**         | Table structure validation                         | `min`, `max`, `min_columns`, `required_headers`                |
-| **Lists**          | List presence and type                             | `min`, `max`, `type`, `min_items`                              |
+| **Lists**          | List presence, type, and item format               | `min`, `max`, `type`, `min_items`, `items_must_match`          |
 | **Word Count**     | Content length constraints                         | `min`, `max`                                                   |
 
 ### Global Rules (document-wide validation)

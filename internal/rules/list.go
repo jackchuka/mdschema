@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
 	"github.com/jackchuka/mdschema/internal/vast"
 )
@@ -34,12 +35,7 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 	// Filter lists by type if specified
 	var matchingLists int
 	for _, list := range lists {
-		if requirement.Type == "" {
-			// Any list type matches
-			matchingLists++
-		} else if requirement.Type == schema.ListTypeOrdered && list.IsOrdered {
-			matchingLists++
-		} else if requirement.Type == schema.ListTypeUnordered && !list.IsOrdered {
+		if listMatchesType(list, requirement.Type) {
 			matchingLists++
 		}
 	}
@@ -68,7 +64,56 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
+	if len(requirement.ItemsMustMatch) > 0 {
+		violations = append(violations, r.validateItemsMustMatch(n, lists, requirement)...)
+	}
+
 	return violations
+}
+
+// validateItemsMustMatch checks every top-level item of the matching lists against each pattern,
+// reporting one violation per (item, failing pattern). Items of nested sub-lists are not checked.
+func (r *ListRule) validateItemsMustMatch(n *vast.Node, lists []*parser.List, requirement schema.ListRule) []Violation {
+	violations := make([]Violation, 0)
+	// Same matching semantics as required_text: literal = substring, pattern = regex.
+	textRule := NewRequiredTextRule()
+
+	for _, list := range lists {
+		if list.Nested || !listMatchesType(list, requirement.Type) {
+			continue
+		}
+		for _, item := range list.Items {
+			for _, pattern := range requirement.ItemsMustMatch {
+				if textRule.contentContainsPattern(item.Text, pattern) {
+					continue
+				}
+				message := fmt.Sprintf("List item '%s' in section '%s' does not match '%s'",
+					item.Text, n.HeadingText(), textPatternString(pattern))
+				violations = append(violations, NewViolation(r.Name(), message, item.Line, item.Column))
+			}
+		}
+	}
+
+	return violations
+}
+
+func textPatternString(pattern schema.RequiredTextPattern) string {
+	if pattern.Literal != "" {
+		return pattern.Literal
+	}
+	return pattern.Pattern
+}
+
+func listMatchesType(list *parser.List, listType schema.ListType) bool {
+	switch listType {
+	case "":
+		return true
+	case schema.ListTypeOrdered:
+		return list.IsOrdered
+	case schema.ListTypeUnordered:
+		return !list.IsOrdered
+	}
+	return false
 }
 
 // ValidateWithContext validates using VAST (validation-ready AST)
@@ -113,6 +158,13 @@ func (r *ListRule) GenerateContent(builder *strings.Builder, element schema.Stru
 		}
 		if rule.MinItems > 0 {
 			fmt.Fprintf(builder, "<!-- Minimum %d items per list -->\n", rule.MinItems)
+		}
+		for _, pattern := range rule.ItemsMustMatch {
+			if pattern.Pattern != "" {
+				fmt.Fprintf(builder, "<!-- Each list item must match: %s (regex) -->\n", pattern.Pattern)
+			} else {
+				fmt.Fprintf(builder, "<!-- Each list item must contain: %s -->\n", pattern.Literal)
+			}
 		}
 	}
 	builder.WriteString("\n")

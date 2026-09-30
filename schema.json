@@ -207,6 +207,30 @@
         "min_items": {
           "type": "integer",
           "description": "Minimum items per list"
+        },
+        "items_must_match": {
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Simple text to match (substring)"
+              },
+              {
+                "properties": {
+                  "pattern": {
+                    "type": "string",
+                    "description": "Regex pattern to match"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "description": "Regex pattern to match"
+              }
+            ],
+            "description": "Required text pattern"
+          },
+          "type": "array",
+          "description": "Text every top-level list item must contain (raw markdown)"
         }
       },
       "additionalProperties": false,

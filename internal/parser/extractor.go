@@ -101,11 +101,48 @@ func extractList(node *ast.List, content []byte) *List {
 	line, col := getPosition(node, content)
 	list := &List{
 		IsOrdered: node.IsOrdered(),
+		Nested:    node.Parent() != nil && node.Parent().Kind() == ast.KindListItem,
+		Items:     make([]*ListItem, 0),
 		Line:      line,
 		Column:    col,
 	}
 
+	for child := node.FirstChild(); child != nil; child = child.NextSibling() {
+		if item, ok := child.(*ast.ListItem); ok {
+			list.Items = append(list.Items, extractListItem(item, content, line, col))
+		}
+	}
+
 	return list
+}
+
+// extractListItem reads the raw source of the item's first text block.
+// Soft line breaks are joined with a single space.
+func extractListItem(node *ast.ListItem, content []byte, fallbackLine, fallbackCol int) *ListItem {
+	item := &ListItem{Line: fallbackLine, Column: fallbackCol}
+
+	block := node.FirstChild()
+	if block == nil {
+		return item
+	}
+	switch block.Kind() {
+	case ast.KindTextBlock, ast.KindParagraph:
+	default:
+		return item
+	}
+
+	lines := block.Lines()
+	if lines.Len() == 0 {
+		return item
+	}
+	parts := make([]string, 0, lines.Len())
+	for i := 0; i < lines.Len(); i++ {
+		seg := lines.At(i)
+		parts = append(parts, strings.TrimSpace(string(seg.Value(content))))
+	}
+	item.Text = strings.Join(parts, " ")
+	item.Line, item.Column = calculateLineColumn(content, lines.At(0).Start)
+	return item
 }
 
 func extractParagraph(node *ast.Paragraph, content []byte) *Paragraph {
