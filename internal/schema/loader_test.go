@@ -236,3 +236,39 @@ func TestIsDir(t *testing.T) {
 		t.Error("isDir() should return false for nonexistent path")
 	}
 }
+
+func TestLoadSchemaWithListItemsMustMatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	schemaFile := filepath.Join(tmpDir, "schema.yml")
+
+	content := []byte(`structure:
+  - heading: "# Title"
+    lists:
+      - min: 1
+        items_must_match:
+          - "]("
+          - pattern: '^[A-Z]'
+`)
+	if err := os.WriteFile(schemaFile, content, 0o644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
+	schema, warnings, err := Load(schemaFile)
+	if err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("expected no unknown-key warnings, got %v", warnings)
+	}
+
+	patterns := schema.Structure[0].Lists[0].ItemsMustMatch
+	if len(patterns) != 2 {
+		t.Fatalf("expected 2 items_must_match entries, got %d", len(patterns))
+	}
+	if patterns[0].Literal != "](" || patterns[0].Pattern != "" {
+		t.Errorf("scalar entry = %+v, want literal %q", patterns[0], "](")
+	}
+	if patterns[1].Pattern != "^[A-Z]" || patterns[1].Literal != "" {
+		t.Errorf("object entry = %+v, want pattern %q", patterns[1], "^[A-Z]")
+	}
+}

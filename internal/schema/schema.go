@@ -419,6 +419,10 @@ type ListRule struct {
 	Max      int      `yaml:"max,omitempty" json:"max,omitempty" lc:"maximum allowed lists"`
 	Type     ListType `yaml:"type,omitempty" json:"type,omitempty" lc:"ordered, unordered, or empty for any"`
 	MinItems int      `yaml:"min_items,omitempty" json:"min_items,omitempty" lc:"minimum items per list"`
+
+	// ItemsMustMatch lists patterns every top-level item of a matching list must satisfy (all of them).
+	// Each is tested against the item's raw Markdown source (e.g. "**Name**" keeps its asterisks).
+	ItemsMustMatch []RequiredTextPattern `yaml:"items_must_match,omitempty" json:"items_must_match,omitempty" lc:"text every top-level list item must contain (raw markdown)"`
 }
 
 // WordCountRule defines word count constraints for a section

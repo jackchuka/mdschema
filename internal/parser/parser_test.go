@@ -632,3 +632,42 @@ Content after heading.
 		t.Errorf("First heading section should have 0 code blocks, got %d", len(firstSection.CodeBlocks))
 	}
 }
+
+func TestParseListItems(t *testing.T) {
+	p := New()
+	md := "# Components\n\n- Button\n- **Card**\n  - field\n- `X`\n-\n"
+	doc, err := p.Parse("test.md", []byte(md))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	lists := doc.GetSections()[0].Lists
+	if len(lists) != 2 {
+		t.Fatalf("expected 2 lists (top-level + nested), got %d", len(lists))
+	}
+
+	top, nested := lists[0], lists[1]
+	if top.Nested {
+		t.Error("top-level list should not be marked nested")
+	}
+	if !nested.Nested {
+		t.Error("sub-list should be marked nested")
+	}
+
+	wantTexts := []string{"Button", "**Card**", "`X`", ""}
+	if len(top.Items) != len(wantTexts) {
+		t.Fatalf("expected %d top-level items, got %d", len(wantTexts), len(top.Items))
+	}
+	for i, want := range wantTexts {
+		if top.Items[i].Text != want {
+			t.Errorf("item %d text = %q, want %q", i, top.Items[i].Text, want)
+		}
+	}
+	if top.Items[1].Line != 4 {
+		t.Errorf("item 1 line = %d, want 4", top.Items[1].Line)
+	}
+
+	if len(nested.Items) != 1 || nested.Items[0].Text != "field" {
+		t.Errorf("nested items = %+v, want [field]", nested.Items)
+	}
+}
