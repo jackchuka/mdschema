@@ -1,0 +1,7 @@
+structure:
+  - heading: "# my-tool"
+    children:
+      - heading: "## Installation"
+        code_blocks: [{ lang: bash, min: 1 }]
+      - heading: "## Usage"
+      - heading: "## License"
