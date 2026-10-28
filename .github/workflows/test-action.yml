@@ -11,6 +11,9 @@ on:
       - "action.yml"
       - ".github/workflows/test-action.yml"
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
