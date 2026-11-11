@@ -300,3 +300,52 @@ func TestListRuleIgnoresNestedLists(t *testing.T) {
 		t.Errorf("nested lists should not count toward max, got: %v", violations)
 	}
 }
+
+func validateLists(t *testing.T, md string, rule schema.ListRule) []Violation {
+	t.Helper()
+	doc, err := parser.New().Parse("test.md", []byte(md))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading:      schema.HeadingPattern{Pattern: "# Doc"},
+				SectionRules: &schema.SectionRules{Lists: []schema.ListRule{rule}},
+			},
+		},
+	}
+	return NewListRule().ValidateWithContext(vast.NewContext(doc, s, ""))
+}
+
+func TestListRuleMinItemsTooFew(t *testing.T) {
+	violations := validateLists(t, "# Doc\n\n- only one\n", schema.ListRule{Min: 1, MinItems: 5})
+
+	if len(violations) != 1 {
+		t.Fatalf("expected 1 violation, got %d: %v", len(violations), violations)
+	}
+	v := violations[0]
+	if !strings.Contains(v.Message, "at least 5 items") || !strings.Contains(v.Message, "found 1") {
+		t.Errorf("unexpected message: %s", v.Message)
+	}
+	if v.Line != 3 {
+		t.Errorf("violation should point at the list (line 3), got line %d", v.Line)
+	}
+}
+
+func TestListRuleMinItemsSatisfied(t *testing.T) {
+	violations := validateLists(t, "# Doc\n\n- a\n- b\n  - nested\n", schema.ListRule{MinItems: 2})
+
+	if len(violations) != 0 {
+		t.Errorf("expected no violations, got: %v", violations)
+	}
+}
+
+func TestListRuleMinItemsRespectsType(t *testing.T) {
+	md := "# Doc\n\n- only one\n\nText.\n\n1. a\n2. b\n"
+	violations := validateLists(t, md, schema.ListRule{Type: schema.ListTypeOrdered, MinItems: 2})
+
+	if len(violations) != 0 {
+		t.Errorf("unordered list should not be checked against an ordered rule, got: %v", violations)
+	}
+}
