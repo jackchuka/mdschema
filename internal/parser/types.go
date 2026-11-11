@@ -73,6 +73,7 @@ type Link struct {
 // List represents a list in the document
 type List struct {
 	IsOrdered bool
+	ItemCount int
 	Line      int
 	Column    int
 }

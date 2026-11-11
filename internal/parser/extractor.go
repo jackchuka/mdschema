@@ -101,6 +101,7 @@ func extractList(node *ast.List, content []byte) *List {
 	line, col := getPosition(node, content)
 	list := &List{
 		IsOrdered: node.IsOrdered(),
+		ItemCount: node.ChildCount(),
 		Line:      line,
 		Column:    col,
 	}

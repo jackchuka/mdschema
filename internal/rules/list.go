@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/jackchuka/mdschema/internal/parser"
 	"github.com/jackchuka/mdschema/internal/schema"
 	"github.com/jackchuka/mdschema/internal/vast"
 )
@@ -24,6 +25,17 @@ func (r *ListRule) Name() string {
 	return "list"
 }
 
+func listMatchesType(list *parser.List, t schema.ListType) bool {
+	switch t {
+	case schema.ListTypeOrdered:
+		return list.IsOrdered
+	case schema.ListTypeUnordered:
+		return !list.IsOrdered
+	default:
+		return true
+	}
+}
+
 // validateListRequirement validates a specific list requirement for a node
 func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.ListRule) []Violation {
 	violations := make([]Violation, 0)
@@ -31,16 +43,17 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 
 	line, col := n.Location()
 
-	// Filter lists by type if specified
 	var matchingLists int
 	for _, list := range lists {
-		if requirement.Type == "" {
-			// Any list type matches
-			matchingLists++
-		} else if requirement.Type == schema.ListTypeOrdered && list.IsOrdered {
-			matchingLists++
-		} else if requirement.Type == schema.ListTypeUnordered && !list.IsOrdered {
-			matchingLists++
+		if !listMatchesType(list, requirement.Type) {
+			continue
+		}
+		matchingLists++
+
+		if requirement.MinItems > 0 && list.ItemCount < requirement.MinItems {
+			message := fmt.Sprintf("List in section '%s' requires at least %d items, found %d",
+				n.HeadingText(), requirement.MinItems, list.ItemCount)
+			violations = append(violations, NewViolation(r.Name(), message, list.Line, list.Column))
 		}
 	}
 
