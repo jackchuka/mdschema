@@ -274,3 +274,29 @@ func TestListRuleGenerateContentNoRules(t *testing.T) {
 		t.Error("GenerateContent() should return false when no list rules")
 	}
 }
+
+func TestListRuleIgnoresNestedLists(t *testing.T) {
+	p := parser.New()
+	doc, err := p.Parse("test.md", []byte("# Doc\n\n- A\n  - sub\n    1. deeper\n- B\n"))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	s := &schema.Schema{
+		Structure: []schema.StructureElement{
+			{
+				Heading: schema.HeadingPattern{Pattern: "# Doc"},
+				SectionRules: &schema.SectionRules{
+					Lists: []schema.ListRule{
+						{Max: 1},
+					},
+				},
+			},
+		},
+	}
+
+	violations := NewListRule().ValidateWithContext(vast.NewContext(doc, s, ""))
+	if len(violations) != 0 {
+		t.Errorf("nested lists should not count toward max, got: %v", violations)
+	}
+}
