@@ -89,8 +89,10 @@ func (p *Parser) Parse(path string, content []byte) (*Document, error) {
 			links = append(links, link)
 
 		case *ast.List:
-			list := extractList(node, content)
-			lists = append(lists, list)
+			// A sub-list belongs to its parent item, so only top-level lists count toward list rules.
+			if node.Parent() == nil || node.Parent().Kind() != ast.KindListItem {
+				lists = append(lists, extractList(node, content))
+			}
 
 		case *east.Table:
 			table := extractTable(node, content)
