@@ -632,3 +632,30 @@ Content after heading.
 		t.Errorf("First heading section should have 0 code blocks, got %d", len(firstSection.CodeBlocks))
 	}
 }
+
+func TestParseListItems(t *testing.T) {
+	md := "# Components\n\n- Button\n- **Card**\n  continued\n  - field\n- `X`\n-\n"
+	doc, err := New().Parse("test.md", []byte(md))
+	if err != nil {
+		t.Fatalf("Parse() error: %v", err)
+	}
+
+	lists := doc.GetSections()[0].Lists
+	if len(lists) != 1 {
+		t.Fatalf("expected 1 top-level list, got %d", len(lists))
+	}
+
+	items := lists[0].Items
+	wantTexts := []string{"Button", "**Card** continued", "`X`", ""}
+	if len(items) != len(wantTexts) {
+		t.Fatalf("expected %d items, got %d", len(wantTexts), len(items))
+	}
+	for i, want := range wantTexts {
+		if items[i].Text != want {
+			t.Errorf("item %d text = %q, want %q", i, items[i].Text, want)
+		}
+	}
+	if items[1].Line != 4 || items[1].Column != 3 {
+		t.Errorf("item 1 position = %d:%d, want 4:3", items[1].Line, items[1].Column)
+	}
+}

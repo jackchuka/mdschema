@@ -2,7 +2,6 @@ package rules
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/jackchuka/mdschema/internal/schema"
@@ -72,16 +71,5 @@ func (r *RequiredTextRule) GenerateContent(builder *strings.Builder, element sch
 
 // contentContainsPattern checks if content contains the required pattern
 func (r *RequiredTextRule) contentContainsPattern(content string, pattern schema.RequiredTextPattern) bool {
-	// If literal is set (scalar form), use substring match
-	if pattern.Literal != "" {
-		return strings.Contains(content, pattern.Literal)
-	}
-
-	// Otherwise use regex match
-	re, err := regexp.Compile(pattern.Pattern)
-	if err != nil {
-		// If regex compilation fails, fall back to substring match
-		return strings.Contains(content, pattern.Pattern)
-	}
-	return re.MatchString(content)
+	return containsTextPattern(content, pattern.Literal, pattern.Pattern)
 }

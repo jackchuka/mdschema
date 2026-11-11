@@ -73,9 +73,17 @@ type Link struct {
 // List represents a list in the document
 type List struct {
 	IsOrdered bool
-	ItemCount int
+	Items     []*ListItem
 	Line      int
 	Column    int
+}
+
+// ListItem is a direct item of a list. Text is the raw Markdown of the item's
+// leading text block, with wrapped lines joined by a space; sub-lists are excluded.
+type ListItem struct {
+	Text   string
+	Line   int
+	Column int
 }
 
 // Paragraph represents a top-level prose paragraph (direct child of the document)

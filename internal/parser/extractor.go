@@ -101,12 +101,43 @@ func extractList(node *ast.List, content []byte) *List {
 	line, col := getPosition(node, content)
 	list := &List{
 		IsOrdered: node.IsOrdered(),
-		ItemCount: node.ChildCount(),
+		Items:     make([]*ListItem, 0, node.ChildCount()),
 		Line:      line,
 		Column:    col,
 	}
 
+	for child := node.FirstChild(); child != nil; child = child.NextSibling() {
+		if item, ok := child.(*ast.ListItem); ok {
+			list.Items = append(list.Items, extractListItem(item, content, line, col))
+		}
+	}
+
 	return list
+}
+
+// extractListItem keeps the raw source rather than rendered text so that
+// patterns can tell "**Card**" apart from "Card". An empty item has no text
+// block and falls back to the list's position.
+func extractListItem(node *ast.ListItem, content []byte, fallbackLine, fallbackCol int) *ListItem {
+	item := &ListItem{Line: fallbackLine, Column: fallbackCol}
+
+	block := node.FirstChild()
+	if block == nil || (block.Kind() != ast.KindTextBlock && block.Kind() != ast.KindParagraph) {
+		return item
+	}
+
+	lines := block.Lines()
+	if lines.Len() == 0 {
+		return item
+	}
+	parts := make([]string, 0, lines.Len())
+	for i := 0; i < lines.Len(); i++ {
+		seg := lines.At(i)
+		parts = append(parts, strings.TrimSpace(string(seg.Value(content))))
+	}
+	item.Text = strings.Join(parts, " ")
+	item.Line, item.Column = calculateLineColumn(content, lines.At(0).Start)
+	return item
 }
 
 func extractParagraph(node *ast.Paragraph, content []byte) *Paragraph {

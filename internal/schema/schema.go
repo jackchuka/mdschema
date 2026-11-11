@@ -419,6 +419,15 @@ type ListRule struct {
 	Max      int      `yaml:"max,omitempty" json:"max,omitempty" lc:"maximum allowed lists"`
 	Type     ListType `yaml:"type,omitempty" json:"type,omitempty" lc:"ordered, unordered, or empty for any"`
 	MinItems int      `yaml:"min_items,omitempty" json:"min_items,omitempty" lc:"minimum items per list"`
+	// Items constrains each top-level item of a matching list.
+	Items *ListItemsRule `yaml:"items,omitempty" json:"items,omitempty" lc:"text rules applied to each top-level item"`
+}
+
+// ListItemsRule applies text rules to every top-level item of a list, matched
+// against the item's raw Markdown (so "**Card**" keeps its asterisks).
+type ListItemsRule struct {
+	RequiredText  []RequiredTextPattern  `yaml:"required_text,omitempty" json:"required_text,omitempty" lc:"text every item must contain"`
+	ForbiddenText []ForbiddenTextPattern `yaml:"forbidden_text,omitempty" json:"forbidden_text,omitempty" lc:"text no item may contain"`
 }
 
 // WordCountRule defines word count constraints for a section
