@@ -207,6 +207,61 @@
         "min_items": {
           "type": "integer",
           "description": "Minimum items per list"
+        },
+        "items": {
+          "properties": {
+            "required_text": {
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "Simple text to match (substring)"
+                  },
+                  {
+                    "properties": {
+                      "pattern": {
+                        "type": "string",
+                        "description": "Regex pattern to match"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "description": "Regex pattern to match"
+                  }
+                ],
+                "description": "Required text pattern"
+              },
+              "type": "array",
+              "description": "Text every item must contain"
+            },
+            "forbidden_text": {
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "Simple text that must not appear (substring)"
+                  },
+                  {
+                    "properties": {
+                      "pattern": {
+                        "type": "string",
+                        "description": "Regex pattern that must NOT appear"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "description": "Regex pattern that must not appear"
+                  }
+                ],
+                "description": "Forbidden text pattern"
+              },
+              "type": "array",
+              "description": "Text no item may contain"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "description": "Text rules applied to each top-level item"
         }
       },
       "additionalProperties": false,

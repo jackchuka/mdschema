@@ -236,3 +236,39 @@ func TestIsDir(t *testing.T) {
 		t.Error("isDir() should return false for nonexistent path")
 	}
 }
+
+func TestLoadSchemaWithListItems(t *testing.T) {
+	schemaFile := filepath.Join(t.TempDir(), "schema.yml")
+	content := []byte(`structure:
+  - heading: "# Title"
+    lists:
+      - min: 1
+        items:
+          required_text:
+            - "]("
+            - pattern: '^[A-Z]'
+          forbidden_text: ["TODO"]
+`)
+	if err := os.WriteFile(schemaFile, content, 0o644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
+	s, warnings, err := Load(schemaFile)
+	if err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("expected no unknown-key warnings, got %v", warnings)
+	}
+
+	items := s.Structure[0].Lists[0].Items
+	if items == nil || len(items.RequiredText) != 2 || len(items.ForbiddenText) != 1 {
+		t.Fatalf("unexpected items rule: %+v", items)
+	}
+	if items.RequiredText[0].Literal != "](" || items.RequiredText[1].Pattern != "^[A-Z]" {
+		t.Errorf("required_text entries not decoded: %+v", items.RequiredText)
+	}
+	if items.ForbiddenText[0].Literal != "TODO" {
+		t.Errorf("forbidden_text entry not decoded: %+v", items.ForbiddenText)
+	}
+}

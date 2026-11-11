@@ -50,10 +50,14 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 		}
 		matchingLists++
 
-		if requirement.MinItems > 0 && list.ItemCount < requirement.MinItems {
+		if requirement.MinItems > 0 && len(list.Items) < requirement.MinItems {
 			message := fmt.Sprintf("List in section '%s' requires at least %d items, found %d",
-				n.HeadingText(), requirement.MinItems, list.ItemCount)
+				n.HeadingText(), requirement.MinItems, len(list.Items))
 			violations = append(violations, NewViolation(r.Name(), message, list.Line, list.Column))
+		}
+
+		if requirement.Items != nil {
+			violations = append(violations, r.validateItems(n, list, requirement.Items)...)
 		}
 	}
 
@@ -81,6 +85,28 @@ func (r *ListRule) validateListRequirement(n *vast.Node, requirement schema.List
 		violations = append(violations, NewViolation(r.Name(), message, line, col))
 	}
 
+	return violations
+}
+
+// validateItems reports one violation per failing (item, pattern) pair at the item's position.
+func (r *ListRule) validateItems(n *vast.Node, list *parser.List, rule *schema.ListItemsRule) []Violation {
+	var violations []Violation
+	for _, item := range list.Items {
+		for _, p := range rule.RequiredText {
+			if !containsTextPattern(item.Text, p.Literal, p.Pattern) {
+				message := fmt.Sprintf("List item '%s' in section '%s' does not match '%s'",
+					item.Text, n.HeadingText(), patternString(p.Literal, p.Pattern))
+				violations = append(violations, NewViolation(r.Name(), message, item.Line, item.Column))
+			}
+		}
+		for _, p := range rule.ForbiddenText {
+			if containsTextPattern(item.Text, p.Literal, p.Pattern) {
+				message := fmt.Sprintf("List item '%s' in section '%s' contains forbidden text '%s'",
+					item.Text, n.HeadingText(), patternString(p.Literal, p.Pattern))
+				violations = append(violations, NewViolation(r.Name(), message, item.Line, item.Column))
+			}
+		}
+	}
 	return violations
 }
 
@@ -126,6 +152,14 @@ func (r *ListRule) GenerateContent(builder *strings.Builder, element schema.Stru
 		}
 		if rule.MinItems > 0 {
 			fmt.Fprintf(builder, "<!-- Minimum %d items per list -->\n", rule.MinItems)
+		}
+		if rule.Items != nil {
+			for _, p := range rule.Items.RequiredText {
+				fmt.Fprintf(builder, "<!-- Each list item must match: %s -->\n", patternHint(p.Literal, p.Pattern))
+			}
+			for _, p := range rule.Items.ForbiddenText {
+				fmt.Fprintf(builder, "<!-- Each list item must NOT contain: %s -->\n", patternHint(p.Literal, p.Pattern))
+			}
 		}
 	}
 	builder.WriteString("\n")

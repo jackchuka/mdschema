@@ -349,3 +349,105 @@ func TestListRuleMinItemsRespectsType(t *testing.T) {
 		t.Errorf("unordered list should not be checked against an ordered rule, got: %v", violations)
 	}
 }
+
+func TestListRuleItemsRequiredText(t *testing.T) {
+	md := "# Doc\n\n- Button\n- **Card**\n- `X`\n"
+	rule := schema.ListRule{Items: &schema.ListItemsRule{
+		RequiredText: []schema.RequiredTextPattern{{Pattern: `^[A-Za-z]\w*$`}},
+	}}
+
+	violations := validateLists(t, md, rule)
+	if len(violations) != 2 {
+		t.Fatalf("expected 2 violations, got %d: %v", len(violations), violations)
+	}
+	if !strings.Contains(violations[0].Message, "'**Card**'") || violations[0].Line != 4 {
+		t.Errorf("first violation should report **Card** at line 4, got %d: %s", violations[0].Line, violations[0].Message)
+	}
+	if !strings.Contains(violations[1].Message, "'`X`'") || violations[1].Line != 5 {
+		t.Errorf("second violation should report `X` at line 5, got %d: %s", violations[1].Line, violations[1].Message)
+	}
+}
+
+func TestListRuleItemsRequiredTextAllEntries(t *testing.T) {
+	md := "# Doc\n\n- Alpha\n- alpha\n- Two words\n"
+	rule := schema.ListRule{Items: &schema.ListItemsRule{
+		RequiredText: []schema.RequiredTextPattern{{Pattern: `^[A-Z]`}, {Pattern: `^\S+$`}},
+	}}
+
+	violations := validateLists(t, md, rule)
+	if len(violations) != 2 {
+		t.Fatalf("each item must satisfy every entry; expected 2 violations, got %d: %v", len(violations), violations)
+	}
+}
+
+func TestListRuleItemsRequiredTextLiteral(t *testing.T) {
+	md := "# Doc\n\n- [a](./a.md)\n- plain\n"
+	rule := schema.ListRule{Items: &schema.ListItemsRule{
+		RequiredText: []schema.RequiredTextPattern{{Literal: "]("}},
+	}}
+
+	violations := validateLists(t, md, rule)
+	if len(violations) != 1 || violations[0].Line != 4 {
+		t.Errorf("expected 1 violation at line 4, got %v", violations)
+	}
+}
+
+func TestListRuleItemsForbiddenText(t *testing.T) {
+	md := "# Doc\n\n- done\n- TODO later\n"
+	rule := schema.ListRule{Items: &schema.ListItemsRule{
+		ForbiddenText: []schema.ForbiddenTextPattern{{Literal: "TODO"}},
+	}}
+
+	violations := validateLists(t, md, rule)
+	if len(violations) != 1 {
+		t.Fatalf("expected 1 violation, got %d: %v", len(violations), violations)
+	}
+	if !strings.Contains(violations[0].Message, "TODO") || violations[0].Line != 4 {
+		t.Errorf("unexpected violation: %d %s", violations[0].Line, violations[0].Message)
+	}
+}
+
+func TestListRuleItemsSkipNestedLists(t *testing.T) {
+	md := "# Doc\n\n- Button\n  - nested field\n"
+	rule := schema.ListRule{Items: &schema.ListItemsRule{
+		RequiredText: []schema.RequiredTextPattern{{Pattern: `^[A-Z]`}},
+	}}
+
+	if violations := validateLists(t, md, rule); len(violations) != 0 {
+		t.Errorf("nested items should not be checked, got: %v", violations)
+	}
+}
+
+func TestListRuleItemsRespectsType(t *testing.T) {
+	md := "# Doc\n\n- lower\n\nText.\n\n1. Upper\n"
+	rule := schema.ListRule{Type: schema.ListTypeOrdered, Items: &schema.ListItemsRule{
+		RequiredText: []schema.RequiredTextPattern{{Pattern: `^[A-Z]`}},
+	}}
+
+	if violations := validateLists(t, md, rule); len(violations) != 0 {
+		t.Errorf("unordered list should not be checked against an ordered rule, got: %v", violations)
+	}
+}
+
+func TestListRuleGenerateContentItems(t *testing.T) {
+	rule := NewListRule()
+	builder := &strings.Builder{}
+	element := schema.StructureElement{
+		Heading: schema.HeadingPattern{Pattern: "## Components"},
+		SectionRules: &schema.SectionRules{
+			Lists: []schema.ListRule{{Min: 1, Items: &schema.ListItemsRule{
+				RequiredText:  []schema.RequiredTextPattern{{Pattern: `^[A-Z]`}},
+				ForbiddenText: []schema.ForbiddenTextPattern{{Literal: "TODO"}},
+			}}},
+		},
+	}
+
+	rule.GenerateContent(builder, element)
+	out := builder.String()
+	if !strings.Contains(out, "Each list item must match: ^[A-Z] (regex)") {
+		t.Errorf("missing required_text hint in:\n%s", out)
+	}
+	if !strings.Contains(out, "Each list item must NOT contain: TODO") {
+		t.Errorf("missing forbidden_text hint in:\n%s", out)
+	}
+}

@@ -144,6 +144,21 @@ Each entry in `structure` (and in any `children`) describes one section:
 | `lists`          | `[{min: 1, type: ordered, min_items: 3}]`              |
 | `word_count`     | `{min: 50, max: 500}`                                  |
 
+### List Items
+
+`items` applies `required_text` and `forbidden_text` to every top-level item of a matching list, instead of the section as a whole:
+
+```yaml
+lists:
+  - min: 1
+    items:
+      required_text:
+        - pattern: '^[A-Z][A-Za-z0-9]*$' # each item must match every entry
+      forbidden_text: ["TODO"]
+```
+
+Items are matched against their raw Markdown, so `**Card**` keeps its asterisks. Sub-list items are not checked.
+
 ### Heading Expressions
 
 Use `expr` to match headings dynamically, for example to require that `my-file.md` starts with `# My File`:
